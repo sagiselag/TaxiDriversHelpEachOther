@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="true"
+    android:layout_gravity="center"
+    android:background="@drawable/bg_gradient"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintCircleRadius="50dp"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/constraintLayout2"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="#F1ECCA"
+            app:layout_constraintBottom_toTopOf="@+id/linearLayout3"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/view2"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:elevation="12dp"
+                android:innerRadius="0dp"
+                android:shape="ring"
+                android:thicknessRatio="1.9"
+                app:cardCornerRadius="40dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/user_imageView"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    tools:srcCompat="@tools:sample/avatars" />
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:id="@+id/view23"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:elevation="12dp"
+                android:innerRadius="0dp"
+                android:shape="ring"
+                android:thicknessRatio="1.9"
+                android:visibility="invisible"
+                app:cardCornerRadius="40dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <ImageView
+                    android:id="@+id/user_imageView2"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_alignParentTop="true"
+                    android:layout_centerHorizontal="true"
+                    tools:srcCompat="@tools:sample/avatars" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/driverNameTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/driver_name"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="@+id/view2"
+                app:layout_constraintStart_toStartOf="@+id/view2"
+                app:layout_constraintTop_toBottomOf="@+id/view2" />
+
+            <LinearLayout
+                android:id="@+id/settingsLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="16dp"
+                android:gravity="center"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toStartOf="@+id/view23"
+                app:layout_constraintStart_toEndOf="@+id/view2"
+                app:layout_constraintTop_toTopOf="@+id/view2">
+
+                <LinearLayout
+                    android:id="@+id/availabilityLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textView5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:text="@string/busy"
+                        android:textAlignment="textEnd"
+                        android:textAllCaps="true"
+                        android:textSize="12sp" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="8dp"
+                        android:orientation="vertical">
+
+                        <Switch
+                            android:id="@+id/available_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:checked="false"
+                            android:foregroundGravity="center"
+                            android:gravity="center" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textView7"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="3"
+                        android:text="@string/available"
+                        android:textAlignment="textStart"
+                        android:textAllCaps="true"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <Space
+                    android:layout_width="match_parent"
+                    android:layout_height="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/textView8"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/search_radius"
+                            android:textAlignment="center"
+                            android:textSize="12sp" />
+
+                        <Space
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent" />
+
+                        <TextView
+                            android:id="@+id/menuGeneralPickupMinutesTV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="3"
+                            android:textAlignment="textStart"
+                            android:textSize="12sp" />
+
+                        <Space
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent" />
+
+                        <TextView
+                            android:id="@+id/menuGeneralPickupMinutesStrTV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/minutes"
+                            android:textAlignment="textStart"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp" />
+
+                    <SeekBar
+                        android:id="@+id/menuGeneralPickupSeekBar"
+                        style="@style/Widget.AppCompat.SeekBar.Discrete"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:contentDescription="@string/minutes"
+                        android:max="19"
+                        android:progress="6" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/usePremiumSettingsCheckBox"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="30dp"
+                android:text="@string/for_premium_shuttles"
+                android:textColor="#333030"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/settingsLayout" />
+
+            <LinearLayout
+                android:id="@+id/linearLayout4"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/usePremiumSettingsCheckBox">
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/menuPremiumMinPriceTIL"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    app:boxStrokeColor="@color/colorAccent"
+                    app:hintTextColor="#333030">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/menuPremiumMinPriceET"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:hint="@string/minimum_price"
+                        android:inputType="numberDecimal"
+                        android:text="200"
+                        android:textAlignment="center"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+
+                <Space
+                    android:layout_width="8dp"
+                    android:layout_height="wrap_content" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/menuPremiumMaxPickupDrivingTimeTIL"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    app:boxStrokeColor="@color/colorAccent"
+                    app:hintTextColor="#333030">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/menuPremiumMaxPickupDrivingTimeEt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center"
+                        android:hint="@string/pickup_distance"
+                        android:inputType="numberDecimal"
+                        android:text="20"
+                        android:textAlignment="center"
+                        android:textSize="14sp" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/post_new_shuttle_lead_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="60dp"
+                android:layout_marginEnd="60dp"
+                android:layout_weight="1"
+                android:autoSizeTextType="none"
+                android:backgroundTint="#FBD32E"
+                android:fallbackLineSpacing="false"
+                android:text="@string/post_new_shuttle_lead"
+                android:textAllCaps="true"
+                android:textColor="#333030"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout4" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <LinearLayout
+            android:id="@+id/linearLayout3"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:background="#48000000"
+            android:gravity="center"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/constraintLayout2">
+
+            <LinearLayout
+                android:id="@+id/COLO"
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:orientation="horizontal"></LinearLayout>
+
+            <androidx.gridlayout.widget.GridLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:columnCount="2"
+                app:useDefaultMargins="true">
+
+                <Button
+                    android:id="@+id/available_shuttles_button"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_margin="16dp"
+                    android:autoSizeTextType="none"
+                    android:backgroundTint="@color/places_text_black_alpha_87"
+                    android:fallbackLineSpacing="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:lineSpacingExtra="10sp"
+                    android:nestedScrollingEnabled="false"
+                    android:shape="ring"
+                    android:text="@string/available_shuttles"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="200dp"
+                    app:layout_gravity="center" />
+
+                <Button
+                    android:id="@+id/commitment_shuttles_button"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_margin="16dp"
+                    android:autoSizeTextType="none"
+                    android:backgroundTint="@color/places_text_black_alpha_87"
+                    android:fallbackLineSpacing="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:lineSpacingExtra="10sp"
+                    android:nestedScrollingEnabled="false"
+                    android:shape="ring"
+                    android:text="@string/commitment_shuttles"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="200dp"
+                    app:layout_gravity="center" />
+
+                <Button
+                    android:id="@+id/lead_management_button"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_margin="16dp"
+                    android:autoSizeTextType="none"
+                    android:backgroundTint="@color/places_text_black_alpha_87"
+                    android:fallbackLineSpacing="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:lineSpacingExtra="10sp"
+                    android:nestedScrollingEnabled="false"
+                    android:shape="ring"
+                    android:text="@string/lead_management"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="200dp"
+                    app:layout_gravity="center" />
+
+                <Button
+                    android:id="@+id/monitoring_report_button"
+                    android:layout_width="140dp"
+                    android:layout_height="140dp"
+                    android:layout_margin="16dp"
+                    android:autoSizeTextType="none"
+                    android:backgroundTint="@color/places_text_black_alpha_87"
+                    android:fallbackLineSpacing="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:lineSpacingExtra="10sp"
+                    android:nestedScrollingEnabled="false"
+                    android:shape="ring"
+                    android:text="@string/monitoring_report"
+                    android:textAlignment="center"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="200dp"
+                    app:layout_gravity="center" />
+            </androidx.gridlayout.widget.GridLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="16dp"
+                android:orientation="vertical"></LinearLayout>
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

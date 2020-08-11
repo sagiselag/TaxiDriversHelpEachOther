@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1030326770539",
+    "firebase_url": "https://taxidrivershelpeachother.firebaseio.com",
+    "project_id": "taxidrivershelpeachother",
+    "storage_bucket": "taxidrivershelpeachother.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1030326770539:android:7154c0b2caa40978474a2e",
+        "android_client_info": {
+          "package_name": "com.android2.taxidrivershelpeachother"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1030326770539-i0911355kiuoh9epdr3sej77mtl08320.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAvi9ONx_b3Ubqu3rWvXuKiGYj7a-79HMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1030326770539-i0911355kiuoh9epdr3sej77mtl08320.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
