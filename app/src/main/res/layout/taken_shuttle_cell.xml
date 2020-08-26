@@ -9,8 +9,8 @@
         android:id="@+id/taken_shuttle_item_card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
         android:backgroundTint="#F1ECCA"
         app:cardCornerRadius="10dp"
         app:cardElevation="4dp"
@@ -36,12 +36,13 @@
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/shuttleItemTimeAndDateLayout"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center">
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout3"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         app:layout_constraintStart_toStartOf="parent"
@@ -51,21 +52,31 @@
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/SIC_date"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
+                            android:layout_height="59dp"
                             android:background="@android:color/transparent"
                             android:editable="false"
                             android:focusableInTouchMode="false"
+                            android:gravity="center"
+                            android:hint="@string/date"
                             android:inputType="none"
                             android:text="@string/date"
-                            android:textSize="14sp" />
+                            android:textSize="12sp" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <Space
+                        android:id="@+id/space_date_time_taken_shuttle"
+                        android:layout_width="8dp"
+                        android:layout_height="match_parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/textInputLayout3"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout7"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        app:layout_constraintStart_toEndOf="@+id/textInputLayout3"
+                        app:layout_constraintStart_toEndOf="@id/space_date_time_taken_shuttle"
                         app:layout_constraintTop_toTopOf="parent"
                         app:startIconDrawable="@drawable/outline_schedule_black_18dp">
 
@@ -76,16 +87,27 @@
                             android:background="@android:color/transparent"
                             android:editable="false"
                             android:focusableInTouchMode="false"
+                            android:gravity="center"
+                            android:hint="@string/time"
                             android:text="@string/time"
                             android:textDirection="ltr"
-                            android:textSize="14sp" />
+                            android:textSize="12sp" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <Space
+                        android:id="@+id/space_time_and_time_to_taken_shuttle"
+                        android:layout_width="8dp"
+                        android:layout_height="match_parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/textInputLayout7"
+                        app:layout_constraintTop_toTopOf="parent" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:id="@+id/textInputLayout8"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@id/space_time_and_time_to_taken_shuttle"
                         app:layout_constraintTop_toTopOf="parent"
                         app:startIconDrawable="@drawable/baseline_drive_eta_black_18dp">
 
@@ -96,13 +118,16 @@
                             android:background="@android:color/transparent"
                             android:editable="false"
                             android:focusableInTouchMode="false"
+                            android:gravity="center"
+                            android:hint="@string/pickup_distance"
                             android:text="@string/time"
-                            android:textSize="14sp" />
+                            android:textSize="12sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -120,6 +145,7 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -149,6 +175,7 @@
                         android:background="@android:color/transparent"
                         android:editable="false"
                         android:focusableInTouchMode="false"
+                        android:hint="@string/remarks"
                         android:inputType="textMultiLine"
                         android:isScrollContainer="true"
                         android:nestedScrollingEnabled="true"
@@ -161,9 +188,9 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <TextView
-                    android:layout_marginTop="8dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="@string/supplier_information"
                     android:textSize="14sp"></TextView>
 
@@ -222,22 +249,12 @@
                             android:textSize="14sp" />
                     </com.google.android.material.textfield.TextInputLayout>
 
-                    <Space
-                        android:layout_width="8dp"
-                        android:layout_height="match_parent" />
-
-                    <ImageView
-                        android:id="@+id/chatWithSupplierIV"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        app:srcCompat="@drawable/baseline_message_black_18dp" />
-
                 </LinearLayout>
 
                 <TextView
-                    android:layout_marginTop="8dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
                     android:text="@string/client_information"
                     android:textSize="14sp"></TextView>
 
@@ -300,56 +317,83 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="horizontal">
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical">
 
-                    <com.google.android.material.textfield.TextInputLayout
+                    <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                        android:layout_height="wrap_content">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/SIC_price"
-                            android:layout_width="match_parent"
+                        <LinearLayout
+                            android:id="@+id/linearLayout5"
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:background="@android:color/transparent"
-                            android:editable="false"
-                            android:focusableInTouchMode="false"
-                            android:hint="@string/price"
-                            android:text="@string/price"
-                            android:textSize="14sp" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            app:layout_constraintEnd_toStartOf="@+id/SIC_cancel"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent">
 
-                    <com.google.android.material.textfield.TextInputLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="3">
 
-                        <com.google.android.material.textfield.TextInputEditText
-                            android:id="@+id/SIC_commission_fee"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="@android:color/transparent"
-                            android:editable="false"
-                            android:focusableInTouchMode="false"
-                            android:hint="@string/commission_fee"
-                            android:singleLine="true"
-                            android:text="@string/commission_fee"
-                            android:textSize="14sp" />
-                    </com.google.android.material.textfield.TextInputLayout>
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/SIC_price"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@android:color/transparent"
+                                    android:editable="false"
+                                    android:focusableInTouchMode="false"
+                                    android:hint="@string/price"
+                                    android:text="@string/price"
+                                    android:textSize="14sp" />
+                            </com.google.android.material.textfield.TextInputLayout>
 
-                    <Button
-                        android:id="@+id/SIC_cancel"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:backgroundTint="#FBD32E"
-                        android:text="@string/cancel_shuttle"
-                        android:textColor="#333030"
-                        app:icon="@drawable/baseline_close_black_18dp"
-                        app:iconSize="25dp"
-                        app:iconTint="#333030" />
+                            <Space
+                                android:layout_width="8dp"
+                                android:layout_height="match_parent" />
 
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="2">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/SIC_commission_fee"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:background="@android:color/transparent"
+                                    android:editable="false"
+                                    android:focusableInTouchMode="false"
+                                    android:hint="@string/commission_fee"
+                                    android:singleLine="true"
+                                    android:text="@string/commission_fee"
+                                    android:textSize="14sp" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <Space
+                                android:layout_width="8dp"
+                                android:layout_height="match_parent" />
+
+                        </LinearLayout>
+
+                        <Button
+                            android:id="@+id/SIC_cancel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:backgroundTint="#FBD32E"
+                            android:text="@string/cancel_shuttle"
+                            android:textColor="#333030"
+                            android:textSize="12sp"
+                            app:icon="@drawable/baseline_close_black_18dp"
+                            app:iconSize="25dp"
+                            app:iconTint="#333030"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
                 </LinearLayout>
 
             </LinearLayout>

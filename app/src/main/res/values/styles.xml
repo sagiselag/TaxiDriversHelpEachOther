@@ -15,6 +15,10 @@
 <!--        <item name="titleTextColor">#333030</item>-->
     </style>
 
+    <style name="MyCustomTabText" parent="TextAppearance.Design.Tab">
+        <item name="android:textSize">10sp</item>
+    </style>
+
 <!--    <style name="CustomButton" parent="Widget.AppCompat.Button">-->
 <!--        <item name="android:background">@drawable/custom_button</item>-->
 <!--        <item name="android:padding">10dp</item>-->

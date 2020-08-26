@@ -90,4 +90,9 @@
     <string name="sold">Sold</string>
     <string name="still_looking_for_driver">Looking for a driver</string>
     <string name="save">Save</string>
+    <string name="settings">Settings</string>
+    <string name="home">Home</string>
+    <string name="getNotifications">Notifications</string>
+    <string name="balance">Balance:</string>
+    <string name="daily_balance">Daily balance:</string>
 </resources>

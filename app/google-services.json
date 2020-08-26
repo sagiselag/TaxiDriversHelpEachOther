@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1030326770539-b03cqekm58htsjkeigqjia1k6gbegd83.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.android2.taxidrivershelpeachother",
+            "certificate_hash": "2453cde90a14d5fab25310cba60961fe438e8d98"
+          }
+        },
+        {
           "client_id": "1030326770539-i0911355kiuoh9epdr3sej77mtl08320.apps.googleusercontent.com",
           "client_type": 3
         }

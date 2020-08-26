@@ -85,6 +85,7 @@ exports.scheduledFunctionForShuttlesWhichWouldBeRelevantInTenMin = functions.pub
 exports.scheduledFunctionForShuttlesInLessThanHundredMin = functions.pubsub.schedule('every 10 minutes').onRun((context) =>
                 {
                     console.log('This will be run every 10 minutes!');
+					// for delayed shuttles
                     return db.collection("todayDelayedShuttles").where("delayInMinutes", "<=", 160).where("delayInMinutes", ">", 70).get().then(function(querySnapshot)
                     {
                             querySnapshot.forEach(function(doc)
@@ -104,6 +105,46 @@ exports.scheduledFunctionForShuttlesInLessThanHundredMin = functions.pubsub.sche
                             return null;
                     });
                 });
+				
+const immediateDelay = 15;				
+// initialize and update delay time for today immediate shuttles
+exports.scheduledFunctionForImmediateShuttles = functions.pubsub.schedule('every 1 minutes').onRun((context) =>
+                {
+                    console.log('This will be run every 1 minutes!');				
+					return !db.collection("shuttles").get().then(function(querySnapshot)
+                    {
+                            querySnapshot.forEach(function(doc)
+                            {
+                                // doc.data() is never undefined for query doc snapshots
+								var docItem = doc.data();
+								
+								if(docItem.delayInMinutes > 0){
+									console.log("update delayInMinutes for ", doc.id);
+									var newDelayVal = docItem.delayInMinutes - 1;
+									db.collection('shuttles').doc(doc.id).update(
+                                            {
+                                                delayInMinutes: newDelayVal
+                                            });
+								}
+								else if(docItem.delayInMinutes <= 0){
+									// move shuttle to expired shuttles
+									db.collection("expiredShuttles").add(docItem);
+									db.collection("shuttles").doc(doc.id).delete();		
+								}
+								else{
+									console.log("initialize delayInMinutes for ", doc.id);
+										// initialize the "delayInMinutes" field of the immediateShuttle
+										db.collection('shuttles').doc(doc.id).update(
+												{
+													delayInMinutes: immediateDelay
+												});
+								}
+								
+                                    return null;
+                            });
+                            return null;
+                    });
+                });				
 
 // update delay time for today delayed shuttles	which will be relevant in more than 100 minutes
 exports.scheduledFunctionForShuttlesInMoreThanHundredMin = functions.pubsub.schedule('every 100 minutes').onRun((context) => 

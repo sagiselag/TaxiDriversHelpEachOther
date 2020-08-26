@@ -31,6 +31,8 @@ public class LoginFragment extends Fragment {
     private int PHONE_CALL_REQUEST_CODE = MainActivity.PHONE_CALL_REQUEST_CODE;
     private final int WRITE_PERMISSION_REQUEST = MainActivity.WRITE_PERMISSION_REQUEST;
     private final int READ_PERMISSION_REQUEST = MainActivity.READ_PERMISSION_REQUEST;
+    private EditText phoneNumberET;
+    private Button loginButton;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -59,7 +61,7 @@ public class LoginFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.login_fragment, container, false);
-        final EditText phoneNumberET = view.findViewById(R.id.phoneNumberEt);
+        phoneNumberET = view.findViewById(R.id.phoneNumberEt);
         final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), phoneNumberET);
         final String countryCode = phoneTextWatcher.getCountryCode();
 
@@ -67,7 +69,7 @@ public class LoginFragment extends Fragment {
         phoneNumberET.setText(countryCode);
         phoneNumberET.addTextChangedListener(phoneTextWatcher);
 
-        Button loginButton = view.findViewById(R.id.login_activity_login_btn);
+        loginButton = view.findViewById(R.id.login_activity_login_btn);
         Button registerButton = view.findViewById(R.id.login_activity_register_btn);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
@@ -120,7 +122,4 @@ public class LoginFragment extends Fragment {
             }
         }
     }
-
-
-
 }

@@ -2,17 +2,19 @@ package com.android2.taxidrivershelpeachother.view;
 
 import android.Manifest;
 import android.app.AlarmManager;
-import android.app.IntentService;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.view.ContextMenu;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -27,21 +29,31 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.coordinatorlayout.widget.CoordinatorLayout;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.viewpager2.widget.ViewPager2;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
 import com.android2.taxidrivershelpeachother.controller.MenuLogic;
 //import com.android2.taxidrivershelpeachother.controller.NotificationReceiver;
 import com.android2.taxidrivershelpeachother.controller.NotificationService;
-import com.android2.taxidrivershelpeachother.controller.ShuttleItemAdapter;
+import com.android2.taxidrivershelpeachother.controller.ViewPagerTabAdapter;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
 import com.android2.taxidrivershelpeachother.model.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.tabs.TabLayout;
+import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
@@ -81,8 +93,14 @@ public class MenuFragment extends Fragment {
     private User loggedInUser;
     private SharedPreferences settings;
     private Button postNewShuttleBtn, commitmentShuttlesBtn, availableShuttlesBtn, leadManagementBtn;
-
-
+    private Toolbar toolbar;
+    private ActionBar actionBar;
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+    private CoordinatorLayout coordinatorLayout;
+    private NavigationView.OnNavigationItemSelectedListener onNavigationItemSelectedListener;
+    private ViewPager2 viewPager;
+    private MenuItem prevMenuItem = null;
 
     public User getLoggedInUser() {
         return loggedInUser;
@@ -168,6 +186,11 @@ public class MenuFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
+//        return setOldMenuFragment(inflater, container, savedInstanceState);
+        return setTabsMenuFragment(inflater, container, savedInstanceState);
+    }
+
+    private View setOldMenuFragment(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.menu_fragment, container, false);
         this.container = container;
 
@@ -214,6 +237,113 @@ public class MenuFragment extends Fragment {
         setListeners();
 
         return view;
+    }
+
+    private View setTabsMenuFragment(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.tabs_menu, container, false);
+        this.container = container;
+
+//        menuLogic = new MenuLogic(getContext(), this, view);
+
+        toolbar = view.findViewById(R.id.toolbar);
+        drawerLayout = view.findViewById(R.id.drawer_layout);
+        navigationView = view.findViewById(R.id.menu_navigation_view);
+        coordinatorLayout = view.findViewById(R.id.coordinator_layout);
+        viewPager = view.findViewById(R.id.tab_menu_view_pager2);
+
+        ((AppCompatActivity)getActivity()).setSupportActionBar(toolbar);
+        actionBar = ((AppCompatActivity)getActivity()).getSupportActionBar();
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowTitleEnabled(false);
+
+        ViewPagerTabAdapter tabAdapter = new ViewPagerTabAdapter(this);
+        viewPager.setAdapter(tabAdapter);
+
+        TabLayout tabLayout = view.findViewById(R.id.tabLayout);
+        List<String> tabsNames = new ArrayList();
+        List<Integer> icons = new ArrayList();
+        icons.add(R.drawable.looking_for_taxi_icon);
+        icons.add(R.drawable.deal_icon);
+        icons.add(R.drawable.lead_managment_icon);
+        icons.add(R.drawable.new_shuttle_lead_icon);
+
+        tabsNames.add(getString(R.string.available_shuttles));
+        tabsNames.add(getString(R.string.commitment_shuttles));
+        tabsNames.add(getString(R.string.lead_management));
+        tabsNames.add(getString(R.string.post_new_shuttle_lead));
+
+        new TabLayoutMediator(tabLayout, viewPager,
+                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position))
+        ).attach();
+
+
+//        viewPager.setAdapter(tabAdapter);
+
+//        postNewShuttleBtn = view.findViewById(R.id.post_new_shuttle_lead_button);
+//        commitmentShuttlesBtn = view.findViewById(R.id.commitment_shuttles_button);
+//        availableShuttlesBtn = view.findViewById(R.id.available_shuttles_button);
+//        leadManagementBtn = view.findViewById(R.id.lead_management_button);
+//        availableSwitch = view.findViewById(R.id.available_switch);
+        userImageView = view.findViewById(R.id.user_imageView);
+        driverName = view.findViewById(R.id.driverNameTextView);
+//        fireBaseHandler = FireBaseHandler.getInstance();
+//        fireBaseHandler.downloadImageIntoImageView(MainActivity.driverLicensePhotoFileName, userImageView);
+//        fireBaseHandler.getLoggedInUserFromDB(this);
+//        premiumShuttlesSettingsCB = view.findViewById(R.id.usePremiumSettingsCheckBox);
+//        premiumMinPrice = view.findViewById(R.id.menuPremiumMinPriceET);
+//        premiumMaxPickupDrivingTime = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeEt);
+//        generalPickupMinutes = view.findViewById(R.id.menuGeneralPickupMinutesTV);
+//        generalPickupMinutesStr = view.findViewById(R.id.menuGeneralPickupMinutesStrTV);
+//        generalPickupSeekBar = view.findViewById(R.id.menuGeneralPickupSeekBar);
+//        premiumMinPriceTIL = view.findViewById(R.id.menuPremiumMinPriceTIL);
+//        premiumMaxPickupDrivingTimeTIL = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeTIL);
+//
+//        if(premiumShuttlesSettingsCB.isChecked()){
+//            premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
+//            premiumMinPriceTIL.setVisibility(View.VISIBLE);
+//        }
+//        else{
+//            premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
+//            premiumMinPriceTIL.setVisibility(View.INVISIBLE);
+//        }
+//
+//
+//        if(generalPickupSeekBar.getProgress() + 1 == 1){
+//            generalPickupMinutes.setText("");
+//            generalPickupMinutesStr.setText(getContext().getString(R.string.minute));
+//        }
+//        else{
+//            generalPickupMinutes.setText(String.valueOf(generalPickupSeekBar.getProgress() + 1));
+//            generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
+//        }
+
+//        setListeners();
+
+        onNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                if(prevMenuItem != null)
+                {
+                    prevMenuItem.setChecked(false);
+                }
+                item.setChecked(true);
+                prevMenuItem = item;
+                drawerLayout.closeDrawers();
+                return false;
+            }
+        };
+        navigationView.setNavigationItemSelectedListener(onNavigationItemSelectedListener);
+        setHasOptionsMenu(true);
+
+        return view;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if(item.getItemId() == android.R.id.home){
+            drawerLayout.openDrawer(GravityCompat.START);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     private void setListeners(){
@@ -414,10 +544,18 @@ public class MenuFragment extends Fragment {
         isAvailable = settings.getBoolean("isAvailable", false);
         notificationTopic = settings.getString("notificationTopic", "New Shuttle request");
         timeBetweenNotifications = settings.getInt("timeBetweenNotifications", 1);
-        generalPickupSeekBar.setProgress(settings.getInt("generalMaxDistanceInMinutes", 7));
-        premiumShuttlesSettingsCB.setChecked(settings.getBoolean("usePremiumSettings", false));
-        premiumMaxPickupDrivingTime.setText(String.valueOf(settings.getInt("premiumMaxDistanceInMinutes", 40)));
-        premiumMinPrice.setText(String.valueOf(settings.getInt("premiumMinPrice", 200)));
+        if(generalPickupSeekBar != null) {
+            generalPickupSeekBar.setProgress(settings.getInt("generalMaxDistanceInMinutes", 7));
+        }
+        if(premiumShuttlesSettingsCB != null) {
+            premiumShuttlesSettingsCB.setChecked(settings.getBoolean("usePremiumSettings", false));
+        }
+        if(premiumMaxPickupDrivingTime != null) {
+            premiumMaxPickupDrivingTime.setText(String.valueOf(settings.getInt("premiumMaxDistanceInMinutes", 40)));
+        }
+        if(premiumMinPrice != null) {
+            premiumMinPrice.setText(String.valueOf(settings.getInt("premiumMinPrice", 200)));
+        }
 
         getActivity().getIntent().putExtra("isAvailable", isAvailable);
         getActivity().getIntent().putExtra("notificationTopic", notificationTopic);

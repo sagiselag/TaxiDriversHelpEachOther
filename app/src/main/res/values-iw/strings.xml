@@ -91,4 +91,9 @@
     <string name="sold">נמכר</string>
     <string name="still_looking_for_driver">עדיין לא נמצא נהג, מחפש..</string>
     <string name="save">שמור</string>
+    <string name="settings">הגדרות</string>
+    <string name="home">בית</string>
+    <string name="getNotifications">התראות</string>
+    <string name="balance">יתרה:</string>
+    <string name="daily_balance">מאזן יומי:</string>
 </resources>
