@@ -31,15 +31,17 @@
 
 
             <CheckBox
-                android:id="@+id/checkBox2"
+                android:id="@+id/notification_tabsMenu_checkBox"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="false"
+                android:buttonTint="#000000"
+                android:checked="true"
                 android:text="@string/getNotifications"
                 app:layout_constraintBottom_toBottomOf="@+id/toolbar"
                 app:layout_constraintEnd_toEndOf="@+id/toolbar"
                 app:layout_constraintStart_toStartOf="@+id/toolbar"
-                app:layout_constraintTop_toTopOf="@+id/toolbar" />
+                app:layout_constraintTop_toTopOf="@+id/toolbar"
+                tools:visibility="visible" />
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/search_setting_menu_image_btn"
@@ -80,26 +82,30 @@
                     android:id="@+id/available_shuttles_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:icon="@drawable/looking_for_taxi_icon" />
+                    android:icon="@drawable/looking_for_taxi_icon"
+                    android:layout="@layout/tab_item" />
 
                 <com.google.android.material.tabs.TabItem
                     android:id="@+id/commitment_shuttles_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
-                    android:icon="@drawable/deal_icon" />
+                    android:icon="@drawable/deal_icon"
+                    android:layout="@layout/tab_item" />
 
                 <com.google.android.material.tabs.TabItem
                     android:id="@+id/lead_management_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:icon="@drawable/lead_managment_icon" />
+                    android:icon="@drawable/lead_managment_icon"
+                    android:layout="@layout/tab_item" />
 
                 <com.google.android.material.tabs.TabItem
                     android:id="@+id/post_new_shuttle_lead_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:icon="@drawable/new_shuttle_lead_icon" />
+                    android:icon="@drawable/new_shuttle_lead_icon"
+                    android:layout="@layout/tab_item" />
             </com.google.android.material.tabs.TabLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

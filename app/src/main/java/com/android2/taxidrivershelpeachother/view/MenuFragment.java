@@ -7,6 +7,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -45,6 +48,7 @@ import com.android2.taxidrivershelpeachother.controller.LogicHandler;
 import com.android2.taxidrivershelpeachother.controller.MenuLogic;
 //import com.android2.taxidrivershelpeachother.controller.NotificationReceiver;
 import com.android2.taxidrivershelpeachother.controller.NotificationService;
+import com.android2.taxidrivershelpeachother.controller.SharedPreferencesUtils;
 import com.android2.taxidrivershelpeachother.controller.ViewPagerTabAdapter;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
@@ -52,6 +56,7 @@ import com.android2.taxidrivershelpeachother.model.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.tabs.TabItem;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputLayout;
@@ -101,6 +106,17 @@ public class MenuFragment extends Fragment {
     private NavigationView.OnNavigationItemSelectedListener onNavigationItemSelectedListener;
     private ViewPager2 viewPager;
     private MenuItem prevMenuItem = null;
+    private View view;
+    private List<String> tabsNames = new ArrayList();
+    private List<Integer> icons = new ArrayList();
+    private TextView tabTextView;
+    private ImageView tabImageView;
+    private SharedPreferencesUtils sharedPreferencesUtils;
+    private CheckBox notificationCheckBox;
+    private TextView balance;
+    private TextView dailyBalance;
+    private Button drawerMenuHomeBtn, drawerMenuMonitoringReportBtn, drawerMenuSettingsBtn;
+    private TabLayout tabLayout;
 
     public User getLoggedInUser() {
         return loggedInUser;
@@ -240,7 +256,10 @@ public class MenuFragment extends Fragment {
     }
 
     private View setTabsMenuFragment(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.tabs_menu, container, false);
+        view = inflater.inflate(R.layout.tabs_menu, container, false);
+
+//        View menuNavigationView = inflater.inflate(R.layout.menu_header_layout, container, false);
+
         this.container = container;
 
 //        menuLogic = new MenuLogic(getContext(), this, view);
@@ -248,6 +267,8 @@ public class MenuFragment extends Fragment {
         toolbar = view.findViewById(R.id.toolbar);
         drawerLayout = view.findViewById(R.id.drawer_layout);
         navigationView = view.findViewById(R.id.menu_navigation_view);
+        View headerView = navigationView.getHeaderView(0);
+
         coordinatorLayout = view.findViewById(R.id.coordinator_layout);
         viewPager = view.findViewById(R.id.tab_menu_view_pager2);
 
@@ -259,22 +280,7 @@ public class MenuFragment extends Fragment {
         ViewPagerTabAdapter tabAdapter = new ViewPagerTabAdapter(this);
         viewPager.setAdapter(tabAdapter);
 
-        TabLayout tabLayout = view.findViewById(R.id.tabLayout);
-        List<String> tabsNames = new ArrayList();
-        List<Integer> icons = new ArrayList();
-        icons.add(R.drawable.looking_for_taxi_icon);
-        icons.add(R.drawable.deal_icon);
-        icons.add(R.drawable.lead_managment_icon);
-        icons.add(R.drawable.new_shuttle_lead_icon);
-
-        tabsNames.add(getString(R.string.available_shuttles));
-        tabsNames.add(getString(R.string.commitment_shuttles));
-        tabsNames.add(getString(R.string.lead_management));
-        tabsNames.add(getString(R.string.post_new_shuttle_lead));
-
-        new TabLayoutMediator(tabLayout, viewPager,
-                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position))
-        ).attach();
+        setTabs();
 
 
 //        viewPager.setAdapter(tabAdapter);
@@ -283,12 +289,18 @@ public class MenuFragment extends Fragment {
 //        commitmentShuttlesBtn = view.findViewById(R.id.commitment_shuttles_button);
 //        availableShuttlesBtn = view.findViewById(R.id.available_shuttles_button);
 //        leadManagementBtn = view.findViewById(R.id.lead_management_button);
-//        availableSwitch = view.findViewById(R.id.available_switch);
-        userImageView = view.findViewById(R.id.user_imageView);
-        driverName = view.findViewById(R.id.driverNameTextView);
-//        fireBaseHandler = FireBaseHandler.getInstance();
-//        fireBaseHandler.downloadImageIntoImageView(MainActivity.driverLicensePhotoFileName, userImageView);
-//        fireBaseHandler.getLoggedInUserFromDB(this);
+        notificationCheckBox = view.findViewById(R.id.notification_tabsMenu_checkBox);
+        userImageView = headerView.findViewById(R.id.user_imageView);
+        driverName = headerView.findViewById(R.id.driverNameTextView);
+        balance = headerView.findViewById(R.id.balance_input_textView);
+        dailyBalance = headerView.findViewById(R.id.daily_balance_input_textView);
+        drawerMenuHomeBtn = headerView.findViewById(R.id.home_menu_item);
+        drawerMenuMonitoringReportBtn = headerView.findViewById(R.id.monitoring_report_menu_item);
+        drawerMenuSettingsBtn = headerView.findViewById(R.id.settings_menu_item);
+
+        fireBaseHandler = FireBaseHandler.getInstance();
+        fireBaseHandler.downloadImageIntoImageView(MainActivity.driverLicensePhotoFileName, userImageView);
+        fireBaseHandler.getLoggedInUserFromDB(this);
 //        premiumShuttlesSettingsCB = view.findViewById(R.id.usePremiumSettingsCheckBox);
 //        premiumMinPrice = view.findViewById(R.id.menuPremiumMinPriceET);
 //        premiumMaxPickupDrivingTime = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeEt);
@@ -317,7 +329,7 @@ public class MenuFragment extends Fragment {
 //            generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
 //        }
 
-//        setListeners();
+        setListeners();
 
         onNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -329,6 +341,14 @@ public class MenuFragment extends Fragment {
                 item.setChecked(true);
                 prevMenuItem = item;
                 drawerLayout.closeDrawers();
+
+                switch (item.getItemId()){
+                    // TODO choose the correct fragment
+                    case R.id.home_menu_item: tabLayout.selectTab(tabLayout.getTabAt(0));
+                    case R.id.monitoring_report_menu_item: // TODO monitoring report fragment
+                    case R.id.settings_menu_item: // TODO app settings fragment
+                }
+
                 return false;
             }
         };
@@ -336,6 +356,61 @@ public class MenuFragment extends Fragment {
         setHasOptionsMenu(true);
 
         return view;
+    }
+
+    private void setTabs(){
+        tabLayout = view.findViewById(R.id.tabLayout);
+
+        icons.add(R.drawable.looking_for_taxi_icon);
+        icons.add(R.drawable.deal_icon);
+        icons.add(R.drawable.lead_managment_icon);
+        icons.add(R.drawable.new_shuttle_lead_icon);
+
+        tabsNames.add(getString(R.string.available_shuttles));
+        tabsNames.add(getString(R.string.commitment_shuttles));
+        tabsNames.add(getString(R.string.lead_management));
+        tabsNames.add(getString(R.string.post_new_shuttle_lead));
+
+        new TabLayoutMediator(tabLayout, viewPager,
+//                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position))
+//                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position)).setCustomView(R.layout.tab_item)
+                (tab, position) -> tab.setCustomView(R.layout.tab_item)
+        ).attach();
+
+        for(int currTab = 0; currTab < tabsNames.size() ; currTab++){
+            tabTextView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_text));
+            tabImageView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_icon));
+            tabTextView.setText(tabsNames.get(currTab));
+            tabImageView.setImageDrawable(getResources().getDrawable(icons.get(currTab), null));
+        }
+
+        tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
+                tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimary));
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+                tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
+                tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimaryDark));
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+                tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
+                tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimary));
+            }
+        });
+
+        tabLayout.getTabAt(0).select();
     }
 
     @Override
@@ -347,60 +422,62 @@ public class MenuFragment extends Fragment {
     }
 
     private void setListeners(){
-        availableSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        if(notificationCheckBox != null){
+            notificationCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 logicHandler.setAvailable(isChecked);
                 isAvailable = isChecked;
                 savePreferences();
                 updateTheNotificationIntentAndService();
-            }
-        });
+            });
+        }
 
-        postNewShuttleBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if(availableSwitch != null) {
+            availableSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                logicHandler.setAvailable(isChecked);
+                isAvailable = isChecked;
+                savePreferences();
+                updateTheNotificationIntentAndService();
+            });
+        }
+
+        if(postNewShuttleBtn != null) {
+            postNewShuttleBtn.setOnClickListener(v -> {
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.root_layout, new NewShuttleFragment(), null).addToBackStack(null);
                 fragmentTransaction.commit();
-            }
-        });
+            });
+        }
 
-        availableShuttlesBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if(availableShuttlesBtn != null) {
+            availableShuttlesBtn.setOnClickListener(v -> {
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.root_layout, new AvailableShuttleFragment("availableShuttles"), null).addToBackStack("availableShuttles");
                 fragmentTransaction.commit();
-            }
-        });
+            });
+        }
 
-        commitmentShuttlesBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if(commitmentShuttlesBtn != null) {
+            commitmentShuttlesBtn.setOnClickListener(v -> {
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.root_layout, new AvailableShuttleFragment("commitmentShuttles"), null).addToBackStack("commitmentShuttles");
                 fragmentTransaction.commit();
-            }
-        });
+            });
+        }
 
-        leadManagementBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        if(leadManagementBtn != null) {
+            leadManagementBtn.setOnClickListener(v -> {
                 FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
                 fragmentTransaction.replace(R.id.root_layout, new AvailableShuttleFragment("leadManagement"), null).addToBackStack("leadManagement");
                 fragmentTransaction.commit();
-            }
-        });
+            });
+        }
 
-        premiumShuttlesSettingsCB.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if(isChecked){
+        if(premiumShuttlesSettingsCB != null) {
+            premiumShuttlesSettingsCB.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (isChecked) {
                     premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
                     premiumMinPriceTIL.setVisibility(View.VISIBLE);
-                }
-                else{
+                } else {
                     premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
                     premiumMinPriceTIL.setVisibility(View.INVISIBLE);
                     premiumMinPrice.setText("");
@@ -408,53 +485,52 @@ public class MenuFragment extends Fragment {
                 }
                 savePreferences();
                 updateTheNotificationIntentAndService();
-            }
-        });
+            });
+        }
 
-        premiumMinPrice.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(!hasFocus){
+        if(premiumMinPrice != null) {
+            premiumMinPrice.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
                     savePreferences();
                     updateTheNotificationIntentAndService();
                 }
-            }
-        });
+            });
+        }
 
-        premiumMaxPickupDrivingTime.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(!hasFocus){
+        if(premiumMaxPickupDrivingTime != null) {
+            premiumMaxPickupDrivingTime.setOnFocusChangeListener((v, hasFocus) -> {
+                if (!hasFocus) {
                     savePreferences();
                     updateTheNotificationIntentAndService();
                 }
-            }
-        });
+            });
+        }
 
-        generalPickupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(progress + 1 == 1){
-                    generalPickupMinutes.setText("");
-                    generalPickupMinutesStr.setText(getContext().getString(R.string.minute));
+        if(generalPickupSeekBar != null) {
+            generalPickupSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (progress + 1 == 1) {
+                        generalPickupMinutes.setText("");
+                        generalPickupMinutesStr.setText(getContext().getString(R.string.minute));
+                    } else {
+                        generalPickupMinutes.setText(String.valueOf(progress + 1));
+                        generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
+                    }
                 }
-                else{
-                    generalPickupMinutes.setText(String.valueOf(progress + 1));
-                    generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+
                 }
-            }
 
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                savePreferences();
-                updateTheNotificationIntentAndService();
-            }
-        });
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    savePreferences();
+                    updateTheNotificationIntentAndService();
+                }
+            });
+        }
     }
 
     private void updateTheNotificationIntentAndService(){
@@ -463,7 +539,7 @@ public class MenuFragment extends Fragment {
             alarmManager.cancel(pendingIntent);
             getContext().stopService(new Intent(getContext().getApplicationContext(), NotificationService.class));
 
-            if (availableSwitch.isChecked()) {
+            if ((availableSwitch != null && availableSwitch.isChecked()) || (notificationCheckBox != null && notificationCheckBox.isChecked())) {
                 pendingIntent = PendingIntent.getBroadcast(getContext().getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 5 * 1000, pendingIntent);
             }
@@ -476,7 +552,7 @@ public class MenuFragment extends Fragment {
     private void init() {
         settings = getContext().getSharedPreferences(getContext().getApplicationContext().getPackageName() + "_preferences", MODE_PRIVATE);
 
-        if (MainActivity.FirstLoadOfApp == true) {
+        if (MainActivity.FirstLoadOfApp) {
             MainActivity.FirstLoadOfApp = false;
             permissionsInit();
             loadPreferences();
@@ -490,6 +566,7 @@ public class MenuFragment extends Fragment {
         pendingIntent = PendingIntent.getBroadcast(getContext().getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         resetLastClickTime();
+        savePreferences();
     }
 
     private void permissionsInit() {
@@ -541,21 +618,39 @@ public class MenuFragment extends Fragment {
     }
 
     private void loadPreferences() {
-        isAvailable = settings.getBoolean("isAvailable", false);
-        notificationTopic = settings.getString("notificationTopic", "New Shuttle request");
-        timeBetweenNotifications = settings.getInt("timeBetweenNotifications", 1);
+
+        sharedPreferencesUtils = MainActivity.getSharedPreferencesUtils();
+        isAvailable = sharedPreferencesUtils.isAvailable();
+        notificationTopic = sharedPreferencesUtils.getNotificationTopic();
+        timeBetweenNotifications = sharedPreferencesUtils.getTimeBetweenNotifications();
         if(generalPickupSeekBar != null) {
-            generalPickupSeekBar.setProgress(settings.getInt("generalMaxDistanceInMinutes", 7));
+            generalPickupSeekBar.setProgress(sharedPreferencesUtils.getGeneralMaxDistanceInMinutes());
         }
         if(premiumShuttlesSettingsCB != null) {
-            premiumShuttlesSettingsCB.setChecked(settings.getBoolean("usePremiumSettings", false));
+            premiumShuttlesSettingsCB.setChecked(sharedPreferencesUtils.isHasPremiumShuttlesSettingsCB());
         }
         if(premiumMaxPickupDrivingTime != null) {
-            premiumMaxPickupDrivingTime.setText(String.valueOf(settings.getInt("premiumMaxDistanceInMinutes", 40)));
+            premiumMaxPickupDrivingTime.setText(String.valueOf(sharedPreferencesUtils.getPremiumMaxDistanceInMinutes()));
         }
         if(premiumMinPrice != null) {
-            premiumMinPrice.setText(String.valueOf(settings.getInt("premiumMinPrice", 200)));
+            premiumMinPrice.setText(String.valueOf(sharedPreferencesUtils.getPremiumMinPrice()));
         }
+
+//        isAvailable = settings.getBoolean("isAvailable", false);
+//        notificationTopic = settings.getString("notificationTopic", "New Shuttle request");
+//        timeBetweenNotifications = settings.getInt("timeBetweenNotifications", 1);
+//        if(generalPickupSeekBar != null) {
+//            generalPickupSeekBar.setProgress(settings.getInt("generalMaxDistanceInMinutes", 7));
+//        }
+//        if(premiumShuttlesSettingsCB != null) {
+//            premiumShuttlesSettingsCB.setChecked(settings.getBoolean("usePremiumSettings", false));
+//        }
+//        if(premiumMaxPickupDrivingTime != null) {
+//            premiumMaxPickupDrivingTime.setText(String.valueOf(settings.getInt("premiumMaxDistanceInMinutes", 40)));
+//        }
+//        if(premiumMinPrice != null) {
+//            premiumMinPrice.setText(String.valueOf(settings.getInt("premiumMinPrice", 200)));
+//        }
 
         getActivity().getIntent().putExtra("isAvailable", isAvailable);
         getActivity().getIntent().putExtra("notificationTopic", notificationTopic);
@@ -563,28 +658,40 @@ public class MenuFragment extends Fragment {
     }
 
     public void savePreferences() {
-        if(getActivity().getIntent().hasExtra("isAvailable")) {
-            int premiumMaxDistanceInMinutesInt = 0, premiumMinPriceInt = 0;
-            try{
-                premiumMaxDistanceInMinutesInt = Integer.valueOf(premiumMaxPickupDrivingTime.getText().toString());
-            }
-            catch (Exception e){ }
-            try{
-                premiumMinPriceInt = Integer.valueOf(premiumMinPrice.getText().toString());
-            }
-            catch (Exception e){
-
-            }
-            SharedPreferences.Editor prefsEditor = settings.edit();
-            prefsEditor.putBoolean("isAvailable",isAvailable);
-            prefsEditor.putInt("generalMaxDistanceInMinutes", generalPickupSeekBar.getProgress());
-            prefsEditor.putString("notificationTopic", notificationTopic);
-            prefsEditor.putInt("timeBetweenNotifications", timeBetweenNotifications);
-            prefsEditor.putBoolean("usePremiumSettings", premiumShuttlesSettingsCB.isChecked());
-            prefsEditor.putInt("premiumMaxDistanceInMinutes", premiumMaxDistanceInMinutesInt);
-            prefsEditor.putInt("premiumMinPrice", premiumMinPriceInt);
-            prefsEditor.commit();
+        try{
+            sharedPreferencesUtils.setAvailable(isAvailable);
+            sharedPreferencesUtils.setGeneralMaxDistanceInMinutes(generalPickupSeekBar.getProgress());
+            sharedPreferencesUtils.setNotificationTopic(notificationTopic);
+            sharedPreferencesUtils.setTimeBetweenNotifications(timeBetweenNotifications);
+            sharedPreferencesUtils.setUsePremiumSettings(premiumShuttlesSettingsCB.isChecked());
+            sharedPreferencesUtils.setPremiumMaxDistanceInMinutes(Integer.valueOf(premiumMaxPickupDrivingTime.getText().toString()));
+            sharedPreferencesUtils.setPremiumMinPrice(Integer.valueOf(premiumMinPrice.getText().toString()));
         }
+        catch (Exception e){}
+        finally {
+            sharedPreferencesUtils.savePreferences();
+        }
+
+
+//    if(getActivity().getIntent().hasExtra("isAvailable")) {
+//            int premiumMaxDistanceInMinutesInt = 0, premiumMinPriceInt = 0;
+//            try{
+//                premiumMaxDistanceInMinutesInt = Integer.valueOf(premiumMaxPickupDrivingTime.getText().toString());
+//                premiumMinPriceInt = Integer.valueOf(premiumMinPrice.getText().toString());
+//                SharedPreferences.Editor prefsEditor = settings.edit();
+//
+//                prefsEditor.putBoolean("isAvailable",isAvailable);
+//                prefsEditor.putInt("generalMaxDistanceInMinutes", generalPickupSeekBar.getProgress());
+//                prefsEditor.putString("notificationTopic", notificationTopic);
+//                prefsEditor.putInt("timeBetweenNotifications", timeBetweenNotifications);
+//                prefsEditor.putBoolean("usePremiumSettings", premiumShuttlesSettingsCB.isChecked());
+//                prefsEditor.putInt("premiumMaxDistanceInMinutes", premiumMaxDistanceInMinutesInt);
+//                prefsEditor.putInt("premiumMinPrice", premiumMinPriceInt);
+////                prefsEditor.put("getUserPhoneAuthCredential", fireBaseHandler.getUserPhoneAuthCredential());
+//                prefsEditor.commit();
+//            }
+//            catch (Exception e){ }
+//        }
     }
 
 }

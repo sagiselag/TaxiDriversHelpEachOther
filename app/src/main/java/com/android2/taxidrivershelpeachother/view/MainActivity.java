@@ -7,6 +7,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.widget.ImageView;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
+import com.android2.taxidrivershelpeachother.controller.SharedPreferencesUtils;
 
 public class MainActivity extends AppCompatActivity {
     public static Location prevLocation;
@@ -36,8 +38,14 @@ public class MainActivity extends AppCompatActivity {
     public final static String vehicleInsurancePhotoFIleName = "vehicleInsurancePhoto";
     public static String appFilePath;
     public static String endOfFile;
+    private static SharedPreferences settings;
+    private static SharedPreferencesUtils sharedPreferencesUtils = new SharedPreferencesUtils();
 
     final String LOGIN_FRAGMENT_TAG = "login_fragment";
+
+    public static SharedPreferencesUtils getSharedPreferencesUtils() {
+        return sharedPreferencesUtils;
+    }
 
     public static void setPrevLocation(Location prevLocation) {
         MainActivity.prevLocation = prevLocation;
@@ -57,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        settings = getApplicationContext().getSharedPreferences(getApplicationContext().getPackageName() + "_preferences", MODE_PRIVATE);
+        loadPreferences();
 
 //        appFilePath = getApplicationContext().getFilesDir() + "/";
         appFilePath = getApplicationContext().getExternalFilesDir(null).getPath()+"/";
@@ -107,5 +118,28 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == LogicHandler.CAMERA_REQUEST && resultCode == RESULT_OK) {
             imageViewToUpdate.setImageDrawable(Drawable.createFromPath(imagePathToUpdate));
         }
+    }
+
+    private void loadPreferences() {
+        sharedPreferencesUtils.setAvailable(settings.getBoolean("isAvailable", false));
+        sharedPreferencesUtils.setNotificationTopic(settings.getString("notificationTopic", "New Shuttle request"));
+        sharedPreferencesUtils.setTimeBetweenNotifications(settings.getInt("timeBetweenNotifications", 1));
+        sharedPreferencesUtils.setGeneralMaxDistanceInMinutes(settings.getInt("generalMaxDistanceInMinutes", 7));
+        sharedPreferencesUtils.setHasPremiumShuttlesSettingsCB(settings.getBoolean("usePremiumSettings", false));
+        sharedPreferencesUtils.setPremiumMaxDistanceInMinutes(settings.getInt("premiumMaxDistanceInMinutes", 40));
+        sharedPreferencesUtils.setPremiumMinPrice(settings.getInt("premiumMinPrice", 200));
+    }
+
+    public static void savePreferences() {
+        SharedPreferences.Editor prefsEditor = settings.edit();
+
+        prefsEditor.putBoolean("isAvailable",sharedPreferencesUtils.isAvailable());
+        prefsEditor.putInt("generalMaxDistanceInMinutes", sharedPreferencesUtils.getGeneralMaxDistanceInMinutes());
+        prefsEditor.putString("notificationTopic", sharedPreferencesUtils.getNotificationTopic());
+        prefsEditor.putInt("timeBetweenNotifications", sharedPreferencesUtils.getTimeBetweenNotifications());
+        prefsEditor.putBoolean("usePremiumSettings", sharedPreferencesUtils.isHasPremiumShuttlesSettingsCB());
+        prefsEditor.putInt("premiumMaxDistanceInMinutes", sharedPreferencesUtils.getPremiumMaxDistanceInMinutes());
+        prefsEditor.putInt("premiumMinPrice", sharedPreferencesUtils.getPremiumMinPrice());
+        prefsEditor.apply();
     }
 }
