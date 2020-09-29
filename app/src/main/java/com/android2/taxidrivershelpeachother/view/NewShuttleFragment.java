@@ -20,6 +20,7 @@ import androidx.fragment.app.FragmentManager;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
+import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.type.LatLng;
 
@@ -94,6 +95,13 @@ public class NewShuttleFragment extends Fragment implements IRefreshableFragment
         editTextsItems.add(passengerPhone_et);
 
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        shuttleLogic.setFragment(this);
+        FireBaseHandler.getInstance().setFragment(this);
     }
 
     private void setListeners(){
@@ -243,6 +251,11 @@ public class NewShuttleFragment extends Fragment implements IRefreshableFragment
     public void refresh(){
         for (EditText editText:editTextsItems) {
             editText.setText("");
+        }
+
+        if(getContext() != null) {
+            date_et.setText(getContext().getString(R.string.today));
+            time_et.setText(getContext().getString(R.string.immediate));
         }
 
         if(fixedPriceLayout != null) {

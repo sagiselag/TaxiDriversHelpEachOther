@@ -11,6 +11,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.text.Layout;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -87,7 +88,7 @@ public class MenuFragment extends Fragment {
     private final int NOTIFICATIONS_PERMISSION_REQUEST = MainActivity.NOTIFICATIONS_PERMISSION_REQUEST;
     private final int AUTOCOMPLETE_FROM_REQUEST_CODE = MainActivity.AUTOCOMPLETE_FROM_REQUEST_CODE;
     private final int AUTOCOMPLETE_DESTINATION_REQUEST_CODE = MainActivity.AUTOCOMPLETE_DESTINATION_REQUEST_CODE;
-    private ImageView userImageView;
+    private ImageView userImageView, logoutImageView;
     private boolean toContinuePermissions = false;
 //    private String tempTimeAndDistance, timeAndDistanceToOriginAddress, shuttleTimeAndDistance;
     private FireBaseHandler fireBaseHandler;
@@ -118,6 +119,7 @@ public class MenuFragment extends Fragment {
     private TabLayout.Tab availableShuttlesTab, commitmentShuttlesTab, postNewShuttleTab, leadManagementTab;
     private ViewPager2Adapter tabAdapter;
     private View headerView;
+    private TextView logoutTextView;
 
     public User getLoggedInUser() {
         return loggedInUser;
@@ -143,6 +145,7 @@ public class MenuFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fragmentManager = getActivity().getSupportFragmentManager();
+
         if(MainActivity.appIsClosed)
         {
             MainActivity.FirstLoadOfApp = true;
@@ -203,8 +206,12 @@ public class MenuFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
-//        return setOldMenuFragment(inflater, container, savedInstanceState);
-        return setTabsMenuFragment(inflater, container, savedInstanceState);
+        View view;
+
+        view = setTabsMenuFragment(inflater, container, savedInstanceState);
+//        view = setOldMenuFragment(inflater, container, savedInstanceState);
+
+        return view;
     }
 
     private View setOldMenuFragment(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -307,12 +314,6 @@ public class MenuFragment extends Fragment {
 
         setTabs();
 
-//        viewPager.setAdapter(tabAdapter);
-
-//        postNewShuttleBtn = view.findViewById(R.id.post_new_shuttle_lead_button);
-//        commitmentShuttlesBtn = view.findViewById(R.id.commitment_shuttles_button);
-//        availableShuttlesBtn = view.findViewById(R.id.available_shuttles_button);
-//        leadManagementBtn = view.findViewById(R.id.lead_management_button);
         notificationCheckBox = view.findViewById(R.id.notification_tabsMenu_checkBox);
         userImageView = headerView.findViewById(R.id.user_imageView);
         driverName = headerView.findViewById(R.id.driverNameTextView);
@@ -323,6 +324,7 @@ public class MenuFragment extends Fragment {
         drawerMenuSettingsBtn = headerView.findViewById(R.id.settings_menu_item);
 
         fireBaseHandler = FireBaseHandler.getInstance();
+        fireBaseHandler.setFragmentManager(fragmentManager);
         fireBaseHandler.downloadImageIntoImageView(MainActivity.driverLicensePhotoFileName, userImageView);
         fireBaseHandler.getLoggedInUserFromDB(this);
         premiumShuttlesSettingsCB = view.findViewById(R.id.usePremiumSettingsCheckBox);
@@ -333,6 +335,8 @@ public class MenuFragment extends Fragment {
         generalPickupSeekBar = view.findViewById(R.id.menuGeneralPickupSeekBar);
         premiumMinPriceTIL = view.findViewById(R.id.menuPremiumMinPriceTIL);
         premiumMaxPickupDrivingTimeTIL = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeTIL);
+        logoutImageView = view.findViewById(R.id.logout_imageView);
+        logoutTextView = view.findViewById(R.id.logout_textView);
 
         if(premiumShuttlesSettingsCB.isChecked()){
             premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
@@ -376,25 +380,10 @@ public class MenuFragment extends Fragment {
         navigationView.setNavigationItemSelectedListener(onNavigationItemSelectedListener);
         setHasOptionsMenu(true);
 
-//        View.OnTouchListener touchListener = new View.OnTouchListener() {
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//                settingsConstraintLayout.setVisibility(View.GONE);
-//                return false;
-//            }
-//        };
-
-
-        view.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                Toast.makeText(getContext(),"inside",Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        });
-
         return view;
     }
+
+
 
     private void setTabs(){
         tabLayout = view.findViewById(R.id.tabLayout);
@@ -410,8 +399,6 @@ public class MenuFragment extends Fragment {
         tabsNames.add(getString(R.string.post_new_shuttle_lead));
 
         new TabLayoutMediator(tabLayout, viewPager,
-//                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position))
-//                (tab, position) -> tab.setIcon(icons.get(position)).setText(tabsNames.get(position)).setCustomView(R.layout.tab_item)
                 (tab, position) -> tab.setCustomView(R.layout.tab_item)
         ).attach();
 
@@ -468,6 +455,13 @@ public class MenuFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
+    private void logout(){
+        fireBaseHandler.getInstance().signOut();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.root_layout, new LoginFragment(), null).addToBackStack(null);
+        fragmentTransaction.commit();
+    }
+
     private void setListeners(){
         if(searchSettingsBtn != null){
             searchSettingsBtn.setOnClickListener(new View.OnClickListener() {
@@ -489,6 +483,11 @@ public class MenuFragment extends Fragment {
                     toolbar.requestFocus();
                 }
             });
+        }
+
+        if(logoutTextView != null && logoutImageView != null){
+            logoutImageView.setOnClickListener(v -> logout());
+            logoutTextView.setOnClickListener(v -> logout());
         }
 
 
@@ -671,8 +670,6 @@ public class MenuFragment extends Fragment {
         }
     }
 
-
-
     public static void resetLastClickTime() {
         lastClickTime = System.currentTimeMillis();
     }
@@ -726,40 +723,11 @@ public class MenuFragment extends Fragment {
         finally {
             sharedPreferencesUtils.savePreferences();
         }
-
-
-//    if(getActivity().getIntent().hasExtra("isAvailable")) {
-//            int premiumMaxDistanceInMinutesInt = 0, premiumMinPriceInt = 0;
-//            try{
-//                premiumMaxDistanceInMinutesInt = Integer.valueOf(premiumMaxPickupDrivingTime.getText().toString());
-//                premiumMinPriceInt = Integer.valueOf(premiumMinPrice.getText().toString());
-//                SharedPreferences.Editor prefsEditor = settings.edit();
-//
-//                prefsEditor.putBoolean("isAvailable",isAvailable);
-//                prefsEditor.putInt("generalMaxDistanceInMinutes", generalPickupSeekBar.getProgress());
-//                prefsEditor.putString("notificationTopic", notificationTopic);
-//                prefsEditor.putInt("timeBetweenNotifications", timeBetweenNotifications);
-//                prefsEditor.putBoolean("usePremiumSettings", premiumShuttlesSettingsCB.isChecked());
-//                prefsEditor.putInt("premiumMaxDistanceInMinutes", premiumMaxDistanceInMinutesInt);
-//                prefsEditor.putInt("premiumMinPrice", premiumMinPriceInt);
-////                prefsEditor.put("getUserPhoneAuthCredential", fireBaseHandler.getUserPhoneAuthCredential());
-//                prefsEditor.commit();
-//            }
-//            catch (Exception e){ }
-//        }
     }
 
     public void whenNewShuttleCreatedOnDB(){
         if(postNewShuttleTab.isSelected()){
-//            viewPager.setWillNotDraw(false);
-//            tabAdapter.createFragment(0);
-//            tabAdapter.createFragment(1);
-//            tabAdapter.createFragment(2);
-//            tabAdapter.createFragment(3);
-
-//            viewPager.removeAllViews();
             leadManagementTab.select();
-//            tabAdapter.notifyDataSetChanged();
         }
     }
 

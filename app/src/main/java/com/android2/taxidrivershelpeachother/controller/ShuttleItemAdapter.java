@@ -1,17 +1,11 @@
 package com.android2.taxidrivershelpeachother.controller;
 
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.view.LayoutInflater;
-import android.view.PointerIcon;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -21,6 +15,8 @@ import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.Passenger;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
+import com.android2.taxidrivershelpeachother.view.IRefreshableFragment;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.MaterialAutoCompleteTextView;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -64,7 +60,7 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
         private MaterialAutoCompleteTextView originAddressTV, destinationAddressTV;
         private TextInputEditText priceTV, commissionFeeTV, remarksTV, shuttleDistanceTV, shuttleDateTV, shuttleTimeTV;
         private TextInputEditText supplierOrDriverNameTV, supplierOrDriverPhoneTV, clientNameTV, clientPhoneTV, shuttleStatusTV;
-        private Button operationBtn, editBtn;
+        private MaterialButton operationBtn, editBtn;
         private TextInputLayout shuttleStatusTIL;
         private CheckBox checkBox;
         private LinearLayout supplierLinearLayout;
@@ -218,6 +214,7 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
             @Override
             public void onClick(View v) {
                 if (id.length() > 0) {
+                    FireBaseHandler.getInstance().setFragment(fragment);
                     FireBaseHandler.getInstance().takeShuttle(id);
                 }
             }
@@ -280,14 +277,15 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
             private void doCancelButtonsOperation() {
                 if (!isInEditMode) {
                     if (id.length() > 0) {
-                        FireBaseHandler.getInstance().deleteShuttleFromSoldShuttles(id);
+                        FireBaseHandler.getInstance().setFragment(fragment);
+                        FireBaseHandler.getInstance().deleteShuttleFromDB(id);
                         notifyDataSetChanged();
                     }
                 } else {
                     loadShuttleInfo(holder, item);
                     holder.clientNameTV.setText(item.getPassenger().getName());
                     holder.clientPhoneTV.setText(item.getPassenger().getPhone());
-                    changeEditBtnTextAndIcon();
+                    changeEditBtnTextAndIcon(holder);
                     changeEditableStatus();
                 }
             }
@@ -297,26 +295,14 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
                     textView.setFocusableInTouchMode(!textView.isFocusableInTouchMode());
                 }
             }
-
-            private void changeEditBtnTextAndIcon() {
-                if (!isInEditMode) {
-                    // edit
-                    holder.editBtn.setText(context.getString(R.string.edit));
-                    holder.editBtn.setPointerIcon(PointerIcon.getSystemIcon(context, android.R.drawable.ic_menu_edit));
-                } else {
-                    // save
-                    holder.editBtn.setText(context.getString(R.string.save));
-                    holder.editBtn.setPointerIcon(PointerIcon.getSystemIcon(context, android.R.drawable.ic_menu_save));
-                }
-            }
         });
 
         holder.editBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                changeEditBtnTextAndIcon();
+//                changeEditBtnTextAndIcon(holder);
                 changeEditableStatus();
-                changeEditModeStatusAndDoEditButtonsOperation();
+                changeEditModeStatusAndDoEditButtonsOperation(holder);
             }
 
             private void changeEditableStatus() {
@@ -325,35 +311,20 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
                 }
             }
 
-            private void changeEditBtnTextAndIcon() {
+            private void changeEditModeStatusAndDoEditButtonsOperation(final ItemViewHolder holder) {
                 if (!isInEditMode) {
                     // edit
-                    holder.editBtn.setText(context.getString(R.string.edit));
-                    holder.editBtn.setPointerIcon(PointerIcon.getSystemIcon(context, android.R.drawable.ic_menu_edit));
-                } else {
-                    // save
-                    holder.editBtn.setText(context.getString(R.string.save));
-                    holder.editBtn.setPointerIcon(PointerIcon.getSystemIcon(context, android.R.drawable.ic_menu_save));
-                }
-            }
-
-            private void changeEditModeStatusAndDoEditButtonsOperation() {
-                if (!isInEditMode) {
-                    // edit
-                    isInEditMode = true;
-                    changeEditBtnTextAndIcon();
+                    changeEditBtnTextAndIcon(holder);
                 } else {
                     // save
                     if (id.length() > 0) {
-//                        FireBaseHandler.getInstance().editShuttle(id, item);
                         changeEditableStatus();
-                        createNewShuttleAndDeleteTheOldOne();
-//                        notifyDataSetChanged();
+                        updateShuttleInfo();
                     }
                 }
             }
 
-            private void createNewShuttleAndDeleteTheOldOne() {
+            private void updateShuttleInfo() {
                 String originAddress, destinationAddress, remarks, shuttleDate, shuttleTime, passengerName, passengerPhone;
                 boolean isFixedPrice;
                 int price = 0, commissionFee;
@@ -397,8 +368,12 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
                 }
 
                 shuttleItem.setHandlingDriverPhone(item.getHandlingDriverPhone());
+                shuttleItem.setPublishedBy(item.getPublishedBy());
+
+                shuttleLogic.setShuttleID(id);
+                FireBaseHandler.getInstance().setFragment(fragment);
+
                 shuttleLogic.publishShuttle(shuttleItem);
-                FireBaseHandler.getInstance().deleteShuttleFromSoldShuttles(id);
             }
         });
     }
@@ -429,11 +404,29 @@ public class ShuttleItemAdapter extends RecyclerView.Adapter<ShuttleItemAdapter.
             @Override
             public void onClick(View v) {
                 if (id.length() > 0) {
+                    FireBaseHandler.getInstance().setFragment(fragment);
                     FireBaseHandler.getInstance().cancelShuttle(id);
-                    notifyDataSetChanged();
                 }
             }
         });
+    }
+
+    private void changeEditBtnTextAndIcon(final ItemViewHolder holder) {
+        isInEditMode = !isInEditMode;
+
+        if (!isInEditMode) {
+            // edit
+            holder.editBtn.setText(context.getString(R.string.edit));
+            holder.editBtn.setIconResource(android.R.drawable.ic_menu_edit);
+            holder.operationBtn.setText(context.getString(R.string.delete));
+            holder.operationBtn.setIconResource(android.R.drawable.ic_menu_delete);
+        } else {
+            // save
+            holder.editBtn.setText(context.getString(R.string.save));
+            holder.editBtn.setIconResource(android.R.drawable.ic_menu_save);
+            holder.operationBtn.setText(context.getString(R.string.cancel_shuttle));
+            holder.operationBtn.setIconResource(android.R.drawable.ic_menu_close_clear_cancel);
+        }
     }
 
     @Override

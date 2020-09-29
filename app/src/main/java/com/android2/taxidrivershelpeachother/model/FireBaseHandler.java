@@ -21,6 +21,8 @@ import com.android2.taxidrivershelpeachother.controller.ShuttleItemAdapter;
 import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
 import com.android2.taxidrivershelpeachother.view.AuthenticationFragment;
 import com.android2.taxidrivershelpeachother.view.AvailableShuttleFragment;
+import com.android2.taxidrivershelpeachother.view.IRefreshableFragment;
+import com.android2.taxidrivershelpeachother.view.LoginFragment;
 import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.android2.taxidrivershelpeachother.view.MenuFragment;
 import com.google.android.gms.maps.model.LatLng;
@@ -63,6 +65,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
@@ -115,6 +118,8 @@ public class FireBaseHandler {
     private Fragment fragment;
     private MenuFragment menuFragment;
     private boolean newShuttleFound = false;
+    private List<String> collectionsNames = new ArrayList<>(Arrays.asList("shuttles", "todayDelayedShuttles", "delayedShuttles", "soldShuttles"));
+
 
     public void setUserPhoneNumber(String userPhoneNumber) {
         this.userPhoneNumber = userPhoneNumber;
@@ -438,6 +443,7 @@ public class FireBaseHandler {
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                     geoFirestore.setLocation(documentReference.getId(), geoPoint);
+                    ((IRefreshableFragment)fragment).refresh();
                 })
                 .addOnFailureListener(e -> Log.w(TAG, "Error adding document", e));
 
@@ -982,27 +988,49 @@ public class FireBaseHandler {
         fromPath.delete()
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "DocumentSnapshot successfully deleted!");
-                    if(currFragment != null){
-                        fragmentManager.popBackStack(currFragment.getFragmentName(), FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-                        fragmentTransaction.replace(R.id.root_layout, new AvailableShuttleFragment(currFragment.getFragmentName()), null).addToBackStack(currFragment.getFragmentName());
-                        fragmentTransaction.commit();
-                    }
+                    ((IRefreshableFragment)fragment).refresh();
                 })
                 .addOnFailureListener(e -> Log.w(TAG, "Error deleting document", e));
     }
 
-    public void deleteShuttleFromSoldShuttles(String shuttleID) {
-        final DocumentReference fromPath = db.collection("soldShuttles").document(shuttleID);
-        deleteShuttle(fromPath);
+    public void setFragment(Fragment fragment) {
+        this.fragment = fragment;
+    }
+
+    public void setFragmentManager(FragmentManager fragmentManager) {
+        this.fragmentManager = fragmentManager;
+    }
+
+    public void deleteShuttleFromDB(String shuttleID) {
+        for (String collection: collectionsNames) {
+            db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult().exists()) {
+                        Log.d(TAG, shuttleID + " found in " + collection);
+                        deleteShuttle(db.collection(collection).document(shuttleID));
+                    }
+                }
+            });
+        }
     }
 
     public void editShuttle(String shuttleID, ShuttleItem item) {
-        final DocumentReference documentReference = db.collection("soldShuttles").document(shuttleID);
-        documentReference.set(item)
-                .addOnSuccessListener(
-                        aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
-                .addOnFailureListener(e -> Log.w(TAG, "Error writing document", e));
+        for (String collection: collectionsNames) {
+            db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult().exists()) {
+                        db.collection(collection).document(shuttleID).set(item).addOnSuccessListener(
+                                aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
+                                .addOnFailureListener(e -> Log.w(TAG, "Error writing document", e));
+                        ((IRefreshableFragment)fragment).refresh();
+                    }
+                }
+            });
+        }
+    }
+
+    public void signOut() {
+        firebaseAuth.signOut();
     }
 }
 

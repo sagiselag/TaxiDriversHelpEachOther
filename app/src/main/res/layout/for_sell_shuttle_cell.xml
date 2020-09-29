@@ -384,9 +384,9 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:backgroundTint="#FBD32E"
-                        android:text="@string/cancel_shuttle"
+                        android:text="@string/delete"
                         android:textColor="#333030"
-                        app:icon="@drawable/baseline_close_black_18dp"
+                        app:icon="@android:drawable/ic_menu_delete"
                         app:iconSize="25dp"
                         app:iconTint="#333030" />
                 </LinearLayout>

@@ -49,7 +49,9 @@ public class LoginFragment extends Fragment {
 
         // Check if user is signed in (non-null) and update UI accordingly.
         currentUser = mAuth.getCurrentUser();
-        updateUI(currentUser);
+        if(currentUser != null) {
+            updateUI(currentUser);
+        }
     }
 
     private void updateUI(FirebaseUser currentUser) {

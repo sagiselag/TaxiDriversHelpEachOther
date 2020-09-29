@@ -67,7 +67,7 @@
                 android:layout_height="wrap_content"
                 android:background="@color/colorPrimary"
                 android:focusableInTouchMode="true"
-                android:visibility="gone"
+                android:visibility="visible"
                 app:layout_constraintBottom_toTopOf="@id/tab_menu_view_pager2"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -313,20 +313,22 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:clickable="true"
-            android:orientation="vertical">
+            android:gravity="center"
+            android:padding="8dp">
 
             <ImageView
-                android:id="@+id/imageView2"
+                android:id="@+id/logout_imageView"
                 android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 app:srcCompat="@drawable/ic_logout" />
 
             <TextView
-                android:id="@+id/footer_item_1"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:id="@+id/logout_textView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:gravity="center"
-                android:text="Footer Item 1" />
+                android:text="@string/logout" />
         </LinearLayout>
     </com.google.android.material.navigation.NavigationView>
 

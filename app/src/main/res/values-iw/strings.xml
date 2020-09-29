@@ -98,4 +98,6 @@
     <string name="daily_balance">מאזן יומי:</string>
     <string name="sort">מיון</string>
     <string name="filter">סינון</string>
+    <string name="logout">התנתק</string>
+    <string name="delete">מחק</string>
 </resources>

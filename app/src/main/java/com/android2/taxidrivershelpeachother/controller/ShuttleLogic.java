@@ -64,6 +64,15 @@ public class ShuttleLogic {
     private VolleyHandler volleyHandler = VolleyHandler.getInstance();
     private Date dateForParsing;
     private Fragment fragment;
+    private String shuttleID = null;
+
+    public String getShuttleID() {
+        return shuttleID;
+    }
+
+    public void setShuttleID(String shuttleID) {
+        this.shuttleID = shuttleID;
+    }
 
     public Fragment getFragment() {
         return fragment;
@@ -408,7 +417,8 @@ public class ShuttleLogic {
             FireBaseHandler.getInstance().addNewShuttleToDB(shuttleItem, "shuttles");
         }
         else{
-            FireBaseHandler.getInstance().addNewShuttleToDB(shuttleItem, "soldShuttles");
+//            FireBaseHandler.getInstance().addNewShuttleToDB(shuttleItem, "soldShuttles");
+            FireBaseHandler.getInstance().editShuttle(shuttleID, shuttleItem);
         }
 
     }
