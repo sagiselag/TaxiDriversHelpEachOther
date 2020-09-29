@@ -7,23 +7,18 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.ContextMenu;
-import android.view.Gravity;
+import android.text.Layout;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
@@ -35,6 +30,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.Guideline;
 import androidx.coordinatorlayout.widget.CoordinatorLayout;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -49,14 +46,13 @@ import com.android2.taxidrivershelpeachother.controller.MenuLogic;
 //import com.android2.taxidrivershelpeachother.controller.NotificationReceiver;
 import com.android2.taxidrivershelpeachother.controller.NotificationService;
 import com.android2.taxidrivershelpeachother.controller.SharedPreferencesUtils;
-import com.android2.taxidrivershelpeachother.controller.ViewPagerTabAdapter;
+import com.android2.taxidrivershelpeachother.controller.ViewPager2Adapter;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
 import com.android2.taxidrivershelpeachother.model.User;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.material.navigation.NavigationView;
-import com.google.android.material.tabs.TabItem;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 import com.google.android.material.textfield.TextInputLayout;
@@ -117,6 +113,11 @@ public class MenuFragment extends Fragment {
     private TextView dailyBalance;
     private Button drawerMenuHomeBtn, drawerMenuMonitoringReportBtn, drawerMenuSettingsBtn;
     private TabLayout tabLayout;
+    private ConstraintLayout settingsConstraintLayout, tabsMenuConstraintLayout;
+    private ImageButton searchSettingsBtn;
+    private TabLayout.Tab availableShuttlesTab, commitmentShuttlesTab, postNewShuttleTab, leadManagementTab;
+    private ViewPager2Adapter tabAdapter;
+    private View headerView;
 
     public User getLoggedInUser() {
         return loggedInUser;
@@ -258,16 +259,39 @@ public class MenuFragment extends Fragment {
     private View setTabsMenuFragment(@NonNull LayoutInflater inflater, @Nullable final ViewGroup container, @Nullable Bundle savedInstanceState) {
         view = inflater.inflate(R.layout.tabs_menu, container, false);
 
-//        View menuNavigationView = inflater.inflate(R.layout.menu_header_layout, container, false);
-
         this.container = container;
 
 //        menuLogic = new MenuLogic(getContext(), this, view);
 
+//        Guideline top, bottom;
+//        top = view.findViewById(R.id.search_settings_layout_top_guideline);
+//        bottom = view.findViewById(R.id.search_settings_layout_bottom_guideline);
+//
+//        view.setOnTouchListener(new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                float y = event.getY();
+//                float topY = top.getY();
+//                float botY = bottom.getY();
+//
+//                if(topY < y && botY > y){
+//                    Toast.makeText(getContext(), "inside, Press = " + y + " , Top = " + topY + " , Bottom = " + botY, Toast.LENGTH_SHORT).show();
+//                }
+//                else{
+//                    Toast.makeText(getContext(), "outside, Press = " + y + " , Top = " + topY + " , Bottom = " + botY , Toast.LENGTH_SHORT).show();
+//                }
+//                return false;
+//            }
+//        });
+
         toolbar = view.findViewById(R.id.toolbar);
         drawerLayout = view.findViewById(R.id.drawer_layout);
         navigationView = view.findViewById(R.id.menu_navigation_view);
-        View headerView = navigationView.getHeaderView(0);
+        searchSettingsBtn = view.findViewById(R.id.search_setting_menu_image_btn);
+        settingsConstraintLayout = view.findViewById(R.id.search_settings_constraint_layout);
+        tabsMenuConstraintLayout = view.findViewById(R.id.tabs_layout_constraintLayout);
+
+        headerView = navigationView.getHeaderView(0);
 
         coordinatorLayout = view.findViewById(R.id.coordinator_layout);
         viewPager = view.findViewById(R.id.tab_menu_view_pager2);
@@ -277,11 +301,11 @@ public class MenuFragment extends Fragment {
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowTitleEnabled(false);
 
-        ViewPagerTabAdapter tabAdapter = new ViewPagerTabAdapter(this);
+        tabAdapter = new ViewPager2Adapter(getFragmentManager(), getLifecycle());
+
         viewPager.setAdapter(tabAdapter);
 
         setTabs();
-
 
 //        viewPager.setAdapter(tabAdapter);
 
@@ -301,59 +325,73 @@ public class MenuFragment extends Fragment {
         fireBaseHandler = FireBaseHandler.getInstance();
         fireBaseHandler.downloadImageIntoImageView(MainActivity.driverLicensePhotoFileName, userImageView);
         fireBaseHandler.getLoggedInUserFromDB(this);
-//        premiumShuttlesSettingsCB = view.findViewById(R.id.usePremiumSettingsCheckBox);
-//        premiumMinPrice = view.findViewById(R.id.menuPremiumMinPriceET);
-//        premiumMaxPickupDrivingTime = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeEt);
-//        generalPickupMinutes = view.findViewById(R.id.menuGeneralPickupMinutesTV);
-//        generalPickupMinutesStr = view.findViewById(R.id.menuGeneralPickupMinutesStrTV);
-//        generalPickupSeekBar = view.findViewById(R.id.menuGeneralPickupSeekBar);
-//        premiumMinPriceTIL = view.findViewById(R.id.menuPremiumMinPriceTIL);
-//        premiumMaxPickupDrivingTimeTIL = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeTIL);
-//
-//        if(premiumShuttlesSettingsCB.isChecked()){
-//            premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
-//            premiumMinPriceTIL.setVisibility(View.VISIBLE);
-//        }
-//        else{
-//            premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
-//            premiumMinPriceTIL.setVisibility(View.INVISIBLE);
-//        }
-//
-//
-//        if(generalPickupSeekBar.getProgress() + 1 == 1){
-//            generalPickupMinutes.setText("");
-//            generalPickupMinutesStr.setText(getContext().getString(R.string.minute));
-//        }
-//        else{
-//            generalPickupMinutes.setText(String.valueOf(generalPickupSeekBar.getProgress() + 1));
-//            generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
-//        }
+        premiumShuttlesSettingsCB = view.findViewById(R.id.usePremiumSettingsCheckBox);
+        premiumMinPrice = view.findViewById(R.id.menuPremiumMinPriceET);
+        premiumMaxPickupDrivingTime = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeEt);
+        generalPickupMinutes = view.findViewById(R.id.menuGeneralPickupMinutesTV);
+        generalPickupMinutesStr = view.findViewById(R.id.menuGeneralPickupMinutesStrTV);
+        generalPickupSeekBar = view.findViewById(R.id.menuGeneralPickupSeekBar);
+        premiumMinPriceTIL = view.findViewById(R.id.menuPremiumMinPriceTIL);
+        premiumMaxPickupDrivingTimeTIL = view.findViewById(R.id.menuPremiumMaxPickupDrivingTimeTIL);
+
+        if(premiumShuttlesSettingsCB.isChecked()){
+            premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
+            premiumMinPriceTIL.setVisibility(View.VISIBLE);
+        }
+        else{
+            premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
+            premiumMinPriceTIL.setVisibility(View.INVISIBLE);
+        }
+
+
+        if(generalPickupSeekBar.getProgress() + 1 == 1){
+            generalPickupMinutes.setText("");
+            generalPickupMinutesStr.setText(getContext().getString(R.string.minute));
+        }
+        else{
+            generalPickupMinutes.setText(String.valueOf(generalPickupSeekBar.getProgress() + 1));
+            generalPickupMinutesStr.setText(getContext().getString(R.string.minutes));
+        }
 
         setListeners();
 
-        onNavigationItemSelectedListener = new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if(prevMenuItem != null)
-                {
-                    prevMenuItem.setChecked(false);
-                }
-                item.setChecked(true);
-                prevMenuItem = item;
-                drawerLayout.closeDrawers();
-
-                switch (item.getItemId()){
-                    // TODO choose the correct fragment
-                    case R.id.home_menu_item: tabLayout.selectTab(tabLayout.getTabAt(0));
-                    case R.id.monitoring_report_menu_item: // TODO monitoring report fragment
-                    case R.id.settings_menu_item: // TODO app settings fragment
-                }
-
-                return false;
+        onNavigationItemSelectedListener = item -> {
+            if(prevMenuItem != null)
+            {
+                prevMenuItem.setChecked(false);
             }
+            item.setChecked(true);
+            prevMenuItem = item;
+            drawerLayout.closeDrawers();
+
+            switch (item.getItemId()){
+                // TODO choose the correct fragment
+                case R.id.home_menu_item: tabLayout.selectTab(tabLayout.getTabAt(0));
+                case R.id.monitoring_report_menu_item: // TODO monitoring report fragment
+                case R.id.settings_menu_item: // TODO app settings fragment
+            }
+
+            return false;
         };
         navigationView.setNavigationItemSelectedListener(onNavigationItemSelectedListener);
         setHasOptionsMenu(true);
+
+//        View.OnTouchListener touchListener = new View.OnTouchListener() {
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//                settingsConstraintLayout.setVisibility(View.GONE);
+//                return false;
+//            }
+//        };
+
+
+        view.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Toast.makeText(getContext(),"inside",Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
 
         return view;
     }
@@ -378,11 +416,18 @@ public class MenuFragment extends Fragment {
         ).attach();
 
         for(int currTab = 0; currTab < tabsNames.size() ; currTab++){
-            tabTextView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_text));
-            tabImageView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_icon));
-            tabTextView.setText(tabsNames.get(currTab));
-            tabImageView.setImageDrawable(getResources().getDrawable(icons.get(currTab), null));
+            if(tabLayout.getTabAt(currTab) != null) {
+                tabTextView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_text));
+                tabImageView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_icon));
+                tabTextView.setText(tabsNames.get(currTab));
+                tabImageView.setImageDrawable(getResources().getDrawable(icons.get(currTab), null));
+            }
         }
+
+        availableShuttlesTab = tabLayout.getTabAt(0);
+        commitmentShuttlesTab = tabLayout.getTabAt(1);
+        leadManagementTab = tabLayout.getTabAt(2);
+        postNewShuttleTab = tabLayout.getTabAt(3);
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -391,6 +436,8 @@ public class MenuFragment extends Fragment {
                 tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
                 tabTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
                 tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimary));
+                settingsConstraintLayout.setVisibility(View.GONE);
+                tabAdapter.getFragmentInPosition(tab.getPosition()).refresh();
             }
 
             @Override
@@ -422,6 +469,30 @@ public class MenuFragment extends Fragment {
     }
 
     private void setListeners(){
+        if(searchSettingsBtn != null){
+            searchSettingsBtn.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if(settingsConstraintLayout.getVisibility() == View.GONE){
+                        settingsConstraintLayout.setVisibility(View.VISIBLE);
+                        settingsConstraintLayout.requestFocus();
+                    }
+                    else{
+                        settingsConstraintLayout.setVisibility(View.GONE);
+                    }
+                }
+            });
+
+            toolbar.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    toolbar.requestFocus();
+                }
+            });
+        }
+
+
+
         if(notificationCheckBox != null){
             notificationCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 logicHandler.setAvailable(isChecked);
@@ -478,8 +549,8 @@ public class MenuFragment extends Fragment {
                     premiumMaxPickupDrivingTimeTIL.setVisibility(View.VISIBLE);
                     premiumMinPriceTIL.setVisibility(View.VISIBLE);
                 } else {
-                    premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
-                    premiumMinPriceTIL.setVisibility(View.INVISIBLE);
+                    premiumMaxPickupDrivingTimeTIL.setVisibility(View.GONE);
+                    premiumMinPriceTIL.setVisibility(View.GONE);
                     premiumMinPrice.setText("");
                     premiumMaxPickupDrivingTime.setText("");
                 }
@@ -636,22 +707,6 @@ public class MenuFragment extends Fragment {
             premiumMinPrice.setText(String.valueOf(sharedPreferencesUtils.getPremiumMinPrice()));
         }
 
-//        isAvailable = settings.getBoolean("isAvailable", false);
-//        notificationTopic = settings.getString("notificationTopic", "New Shuttle request");
-//        timeBetweenNotifications = settings.getInt("timeBetweenNotifications", 1);
-//        if(generalPickupSeekBar != null) {
-//            generalPickupSeekBar.setProgress(settings.getInt("generalMaxDistanceInMinutes", 7));
-//        }
-//        if(premiumShuttlesSettingsCB != null) {
-//            premiumShuttlesSettingsCB.setChecked(settings.getBoolean("usePremiumSettings", false));
-//        }
-//        if(premiumMaxPickupDrivingTime != null) {
-//            premiumMaxPickupDrivingTime.setText(String.valueOf(settings.getInt("premiumMaxDistanceInMinutes", 40)));
-//        }
-//        if(premiumMinPrice != null) {
-//            premiumMinPrice.setText(String.valueOf(settings.getInt("premiumMinPrice", 200)));
-//        }
-
         getActivity().getIntent().putExtra("isAvailable", isAvailable);
         getActivity().getIntent().putExtra("notificationTopic", notificationTopic);
         getActivity().getIntent().putExtra("timeBetweenNotifications", timeBetweenNotifications);
@@ -693,5 +748,20 @@ public class MenuFragment extends Fragment {
 //            catch (Exception e){ }
 //        }
     }
+
+    public void whenNewShuttleCreatedOnDB(){
+        if(postNewShuttleTab.isSelected()){
+//            viewPager.setWillNotDraw(false);
+//            tabAdapter.createFragment(0);
+//            tabAdapter.createFragment(1);
+//            tabAdapter.createFragment(2);
+//            tabAdapter.createFragment(3);
+
+//            viewPager.removeAllViews();
+            leadManagementTab.select();
+//            tabAdapter.notifyDataSetChanged();
+        }
+    }
+
 
 }

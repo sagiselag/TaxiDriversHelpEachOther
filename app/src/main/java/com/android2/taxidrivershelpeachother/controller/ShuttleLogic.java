@@ -20,6 +20,7 @@ import com.android2.taxidrivershelpeachother.model.Passenger;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
 import com.android2.taxidrivershelpeachother.model.VolleyHandler;
 import com.android2.taxidrivershelpeachother.view.AvailableShuttleFragment;
+import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.android2.taxidrivershelpeachother.view.NewShuttleFragment;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
@@ -202,12 +203,21 @@ public class ShuttleLogic {
                 @Override
                 public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                     String day = date.getText().toString();
+                    String timeStr;
                     if (timeIsInFuture(day, hourOfDay, minute)) {
-                        if (minute > 9) {
-                            time.setText(hourOfDay + " : " + minute);
-                        } else {
-                            time.setText(hourOfDay + " : 0" + minute);
+                        if(hourOfDay < 10){
+                            timeStr = "0" + hourOfDay;
                         }
+                        else{
+                            timeStr = String.valueOf(hourOfDay);
+                        }
+                        timeStr += ":";
+                        if (minute > 9) {
+                            timeStr += minute;
+                        } else {
+                            timeStr += "0" + minute;
+                        }
+                        time.setText(timeStr);
                     } else {
                         time.setText(context.getString(R.string.immediate));
                     }
@@ -244,9 +254,17 @@ public class ShuttleLogic {
         List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
 
         // Start the autocomplete intent.
-        Intent intent = new Autocomplete.IntentBuilder(
-                AutocompleteActivityMode.OVERLAY, fields)
-                .build(container.getContext());
+        Intent intent;
+        if(container != null) {
+            intent = new Autocomplete.IntentBuilder(
+                    AutocompleteActivityMode.OVERLAY, fields)
+                    .build(container.getContext());
+        }
+        else{
+            intent = new Autocomplete.IntentBuilder(
+                    AutocompleteActivityMode.OVERLAY, fields)
+                    .build(view.getContext());
+        }
         newShuttleFragment.startActivityForResult(intent, code);
 
     }
@@ -332,12 +350,12 @@ public class ShuttleLogic {
 //                    setDistanceToShuttleInfo(shuttleItem, distanceStr, durationStr);
                     shuttleItem.setDistanceToShuttleInKm(Double.parseDouble(distanceStr));
                     shuttleItem.setDistanceToShuttleInMinutes(Integer.parseInt(durationStr));
-                    if (availableShuttleFragment != null) {
-                        availableShuttleFragment.refresh();
-                    } else {
+
+                    if (availableShuttleFragment == null) {
                         FireBaseHandler.getInstance().sortAndSendShuttlesToDriver();
                     }
-                } catch (JSONException e) {
+                }
+                catch (JSONException e) {
                     e.printStackTrace();
                     if (availableShuttleFragment == null) {
                         shuttleItem.setDistanceToShuttleInMinutes(-1);

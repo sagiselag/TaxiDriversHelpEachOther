@@ -12,14 +12,18 @@
         android:layout_height="match_parent">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/tabs_layout_constraintLayout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:focusableInTouchMode="true">
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="?attr/colorPrimary"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:minHeight="?attr/actionBarSize"
                 android:theme="?attr/actionBarTheme"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -57,6 +61,182 @@
             </androidx.appcompat.widget.AppCompatImageButton>
 
 
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/search_settings_constraint_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimary"
+                android:focusableInTouchMode="true"
+                android:visibility="gone"
+                app:layout_constraintBottom_toTopOf="@id/tab_menu_view_pager2"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/search_settings_layout_bottom_guideline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent" />
+
+                <androidx.constraintlayout.widget.Guideline
+                    android:id="@+id/search_settings_layout_top_guideline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <LinearLayout
+                    android:id="@+id/linearLayout6"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginEnd="16dp"
+                    android:gravity="center"
+                    android:orientation="vertical"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/textView8"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/search_radius"
+                            android:textAlignment="center"
+                            android:textColor="@color/colorPrimaryDark"
+                            android:textSize="12sp" />
+
+                        <Space
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent" />
+
+                        <TextView
+                            android:id="@+id/menuGeneralPickupMinutesTV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="3"
+                            android:textAlignment="textStart"
+                            android:textColor="@color/colorPrimaryDark"
+                            android:textSize="12sp" />
+
+                        <Space
+                            android:layout_width="4dp"
+                            android:layout_height="match_parent" />
+
+                        <TextView
+                            android:id="@+id/menuGeneralPickupMinutesStrTV"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/minutes"
+                            android:textAlignment="textStart"
+                            android:textColor="@color/colorPrimaryDark"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <Space
+                        android:layout_width="match_parent"
+                        android:layout_height="6dp" />
+
+                    <SeekBar
+                        android:id="@+id/menuGeneralPickupSeekBar"
+                        style="@style/Widget.AppCompat.SeekBar.Discrete"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:contentDescription="@string/minutes"
+                        android:max="19"
+                        android:progress="6"
+                        android:progressTint="@color/colorPrimaryDark"
+                        android:thumbTint="@color/colorPrimaryDark" />
+
+                </LinearLayout>
+
+                <CheckBox
+                    android:id="@+id/usePremiumSettingsCheckBox"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/colorPrimaryDark"
+                    android:minHeight="30dp"
+                    android:text="@string/for_premium_shuttles"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textSize="12sp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/linearLayout6" />
+
+                <LinearLayout
+                    android:id="@+id/linearLayout4"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="60dp"
+                    android:layout_marginEnd="60dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/usePremiumSettingsCheckBox">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/menuPremiumMinPriceTIL"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        app:boxStrokeColor="@color/colorPrimaryDark"
+                        app:hintTextColor="#333030">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/menuPremiumMinPriceET"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:hint="@string/minimum_price"
+                            android:inputType="numberDecimal"
+                            android:text="200"
+                            android:textAlignment="center"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="wrap_content" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/menuPremiumMaxPickupDrivingTimeTIL"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        app:boxStrokeColor="@color/colorPrimaryDark"
+                        app:hintTextColor="#333030">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/menuPremiumMaxPickupDrivingTimeEt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:hint="@string/pickup_distance"
+                            android:inputType="numberDecimal"
+                            android:text="20"
+                            android:textAlignment="center"
+                            android:textSize="14sp" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
             <androidx.viewpager2.widget.ViewPager2
                 android:id="@+id/tab_menu_view_pager2"
                 android:layout_width="0dp"
@@ -64,7 +244,7 @@
                 app:layout_constraintBottom_toTopOf="@id/tabLayout"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/toolbar">
+                app:layout_constraintTop_toBottomOf="@id/search_settings_constraint_layout">
 
             </androidx.viewpager2.widget.ViewPager2>
 
@@ -72,6 +252,8 @@
                 android:id="@+id/tabLayout"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -82,6 +264,8 @@
                     android:id="@+id/available_shuttles_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:icon="@drawable/looking_for_taxi_icon"
                     android:layout="@layout/tab_item" />
 
@@ -90,6 +274,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:adjustViewBounds="true"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:icon="@drawable/deal_icon"
                     android:layout="@layout/tab_item" />
 
@@ -97,6 +283,8 @@
                     android:id="@+id/lead_management_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:icon="@drawable/lead_managment_icon"
                     android:layout="@layout/tab_item" />
 
@@ -104,6 +292,8 @@
                     android:id="@+id/post_new_shuttle_lead_tabItem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:focusable="true"
+                    android:focusableInTouchMode="true"
                     android:icon="@drawable/new_shuttle_lead_icon"
                     android:layout="@layout/tab_item" />
             </com.google.android.material.tabs.TabLayout>
@@ -116,5 +306,28 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         app:headerLayout="@layout/menu_header_layout"
-        app:menu="@menu/drawer_menu"/>
+        app:menu="@menu/drawer_menu">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:clickable="true"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/imageView2"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                app:srcCompat="@drawable/ic_logout" />
+
+            <TextView
+                android:id="@+id/footer_item_1"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:gravity="center"
+                android:text="Footer Item 1" />
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
+
 </androidx.drawerlayout.widget.DrawerLayout>

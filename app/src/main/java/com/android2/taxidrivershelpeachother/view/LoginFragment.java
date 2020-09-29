@@ -33,6 +33,7 @@ public class LoginFragment extends Fragment {
     private final int READ_PERMISSION_REQUEST = MainActivity.READ_PERMISSION_REQUEST;
     private EditText phoneNumberET;
     private Button loginButton;
+    private FirebaseUser currentUser;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,14 +48,25 @@ public class LoginFragment extends Fragment {
         //        fragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
 
         // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
+        currentUser = mAuth.getCurrentUser();
         updateUI(currentUser);
     }
 
     private void updateUI(FirebaseUser currentUser) {
-//        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-//        fragmentTransaction.replace(R.id.root_layout, new MenuFragment(), null).addToBackStack(null);
-//        fragmentTransaction.commit();
+        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), null);
+        final String countryCode = phoneTextWatcher.getCountryCode();
+        String userPhoneNumber = currentUser.getPhoneNumber();
+
+        if (userPhoneNumber.length() > 10)
+        {
+            userPhoneNumber = userPhoneNumber.substring(userPhoneNumber.length() - 10);
+        }
+
+        userPhoneNumber = countryCode + userPhoneNumber;
+        FireBaseHandler.getInstance().setUserPhoneNumber(userPhoneNumber);
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.root_layout, new MenuFragment(), null).addToBackStack(null);
+        fragmentTransaction.commit();
     }
 
     @Nullable

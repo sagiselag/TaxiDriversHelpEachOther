@@ -25,8 +25,11 @@ public class MyPhoneTextWatcher extends PhoneNumberFormattingTextWatcher {
         this.phoneNumberET = editText;
         countryCode = "+ ("+ String.valueOf(String.valueOf(getCurrentCountryCode(context))) + ") ";
         filterArray[0] = new InputFilter.LengthFilter(countryCode.length() + PHONE_NUMBER_LENGTH);
-        this.phoneNumberET.setFilters(filterArray);
-        Selection.setSelection(this.phoneNumberET.getText(), this.phoneNumberET.getText().length());
+        if(phoneNumberET != null)
+        {
+            this.phoneNumberET.setFilters(filterArray);
+            Selection.setSelection(this.phoneNumberET.getText(), this.phoneNumberET.getText().length());
+        }
     }
 
     public String getCountryCode() {

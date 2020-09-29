@@ -8,10 +8,15 @@ import androidx.fragment.app.FragmentTransaction;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
+import android.text.Layout;
+import android.view.MotionEvent;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
@@ -40,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     public static String endOfFile;
     private static SharedPreferences settings;
     private static SharedPreferencesUtils sharedPreferencesUtils = new SharedPreferencesUtils();
+    private static long currTime;
 
     final String LOGIN_FRAGMENT_TAG = "login_fragment";
 
@@ -53,6 +59,10 @@ public class MainActivity extends AppCompatActivity {
 
     public static Location getPrevLocation() {
         return prevLocation;
+    }
+
+    public static long getPrevRefreshTime() {
+        return 0;
     }
 
     @Override

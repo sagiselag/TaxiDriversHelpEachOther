@@ -23,10 +23,12 @@ import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.type.LatLng;
 
+import java.util.ArrayList;
 import java.util.Currency;
+import java.util.List;
 import java.util.Locale;
 
-public class NewShuttleFragment extends Fragment {
+public class NewShuttleFragment extends Fragment implements IRefreshableFragment{
     private ShuttleLogic shuttleLogic;
     private FragmentManager fragmentManager;
     private int AUTOCOMPLETE_FROM_REQUEST_CODE = 2;
@@ -38,6 +40,7 @@ public class NewShuttleFragment extends Fragment {
     private Button publish;
     private CheckBox fixedPrice_cb;
     private ViewGroup container;
+    private List<EditText> editTextsItems = new ArrayList<>();
 
 //    private String tempTimeAndDistance, timeAndDistanceToOriginAddress, shuttleTimeAndDistance;
 
@@ -71,7 +74,29 @@ public class NewShuttleFragment extends Fragment {
         commissionFee_et.setText(Currency.getInstance(Locale.getDefault()).getSymbol() + "10");
         Selection.setSelection(commissionFee_et.getText(), commissionFee_et.getText().length());
 
+        fixedPrice_et.setText(Currency.getInstance(Locale.getDefault()).getSymbol() + fixedPrice_et.getText());
+        Selection.setSelection(fixedPrice_et.getText(), fixedPrice_et.getText().length());
 
+//        Currency.getInstance(Locale.getDefault()).getSymbol()
+//        getString(R.string.today) = Currency.getInstance(Locale.getDefault()).getSymbol();
+
+        setListeners();
+
+        editTextsItems.clear();
+        editTextsItems.add(from_et);
+        editTextsItems.add(destination_et);
+        editTextsItems.add(commissionFee_et);
+        editTextsItems.add(fixedPrice_et);
+        editTextsItems.add(time_et);
+        editTextsItems.add(date_et);
+        editTextsItems.add(remarks_et);
+        editTextsItems.add(passengerName_et);
+        editTextsItems.add(passengerPhone_et);
+
+        return view;
+    }
+
+    private void setListeners(){
         commissionFee_et.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -98,10 +123,6 @@ public class NewShuttleFragment extends Fragment {
             }
         });
 
-        fixedPrice_et.setText(Currency.getInstance(Locale.getDefault()).getSymbol() + fixedPrice_et.getText());
-        Selection.setSelection(fixedPrice_et.getText(), fixedPrice_et.getText().length());
-
-
         fixedPrice_et.addTextChangedListener(new TextWatcher() {
 
             @Override
@@ -126,9 +147,6 @@ public class NewShuttleFragment extends Fragment {
 
             }
         });
-
-//        Currency.getInstance(Locale.getDefault()).getSymbol()
-//        getString(R.string.today) = Currency.getInstance(Locale.getDefault()).getSymbol();
 
         fixedPrice_cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -160,10 +178,9 @@ public class NewShuttleFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 shuttleLogic.publishShuttle(null);
+//                refresh();
             }
         });
-
-        return view;
     }
 
     @Override
@@ -221,5 +238,18 @@ public class NewShuttleFragment extends Fragment {
 
     public CheckBox getFixedPrice_cb() {
         return fixedPrice_cb;
+    }
+
+    public void refresh(){
+        for (EditText editText:editTextsItems) {
+            editText.setText("");
+        }
+
+        if(fixedPriceLayout != null) {
+            fixedPriceLayout.getEditText().setText("");
+        }
+        if(fixedPrice_cb != null) {
+            fixedPrice_cb.setChecked(false);
+        }
     }
 }

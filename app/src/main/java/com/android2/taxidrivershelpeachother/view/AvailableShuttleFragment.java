@@ -30,7 +30,7 @@ import java.util.List;
 
 import static com.android2.taxidrivershelpeachother.view.MenuFragment.timeBetweenClicksIsOk;
 
-public class AvailableShuttleFragment extends Fragment {
+public class AvailableShuttleFragment extends Fragment implements IRefreshableFragment{
     private FragmentManager fragmentManager;
     private RecyclerView shuttlesRecyclerView;
     private ShuttleItemAdapter shuttleItemAdapter;
@@ -69,6 +69,7 @@ public class AvailableShuttleFragment extends Fragment {
     }
 
     private void adapterInit() {
+
         shuttleItemAdapter.setListener(new ShuttleItemAdapter.MyItemListener() {
             @Override
             public void onItemClicked(int position, View view) {
@@ -95,6 +96,7 @@ public class AvailableShuttleFragment extends Fragment {
     }
 
     public void refresh(){
-        adapterInit();
+        getShuttleItems().clear();
+        FireBaseHandler.getInstance().getAvailableShuttlesFromDB(this);
     }
 }

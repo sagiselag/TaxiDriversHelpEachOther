@@ -95,4 +95,6 @@
     <string name="getNotifications">Notifications</string>
     <string name="balance">Balance:</string>
     <string name="daily_balance">Daily balance:</string>
+    <string name="sort">Sort</string>
+    <string name="filter">Filter</string>
 </resources>

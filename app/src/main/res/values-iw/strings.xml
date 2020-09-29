@@ -96,4 +96,6 @@
     <string name="getNotifications">התראות</string>
     <string name="balance">יתרה:</string>
     <string name="daily_balance">מאזן יומי:</string>
+    <string name="sort">מיון</string>
+    <string name="filter">סינון</string>
 </resources>

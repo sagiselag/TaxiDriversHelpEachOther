@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -111,7 +112,13 @@ public class FireBaseHandler {
     private boolean succeedToTakeShuttle = false, someoneElseTookTheShuttle = false;
     private boolean handlingDriverPhoneNeedToBeDeleted = false;
     private AvailableShuttleFragment currFragment;
+    private Fragment fragment;
+    private MenuFragment menuFragment;
+    private boolean newShuttleFound = false;
 
+    public void setUserPhoneNumber(String userPhoneNumber) {
+        this.userPhoneNumber = userPhoneNumber;
+    }
 
     private FireBaseHandler() {
         firebaseAuth = FirebaseAuth.getInstance();
@@ -434,17 +441,17 @@ public class FireBaseHandler {
                 })
                 .addOnFailureListener(e -> Log.w(TAG, "Error adding document", e));
 
-        db.collection("shuttles")
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            Log.d(TAG, document.getId() + " => " + document.getData());
-                        }
-                    } else {
-                        Log.w(TAG, "Error getting documents.", task.getException());
-                    }
-                });
+//        db.collection("shuttles")
+//                .get()
+//                .addOnCompleteListener(task -> {
+//                    if (task.isSuccessful()) {
+//                        for (QueryDocumentSnapshot document : task.getResult()) {
+//                            Log.d(TAG, document.getId() + " => " + document.getData());
+//                        }
+//                    } else {
+//                        Log.w(TAG, "Error getting documents.", task.getException());
+//                    }
+//                });
     }
 
     public FirebaseFirestore getDb() {
@@ -503,8 +510,12 @@ public class FireBaseHandler {
             Map<String, Object> shuttleData = document.getData();
             String publishedBy = (String) shuttleData.get("publishedBy");
             String currFragment = availableShuttleFragment.getFragmentName();
-            boolean isPublishedByTheCurrUser = publishedBy.equalsIgnoreCase(userPhoneNumber);
+            boolean isPublishedByTheCurrUser = false;
             boolean currFragmentIsLeadManagement = currFragment.equalsIgnoreCase("leadManagement");
+
+            if(publishedBy != null && userPhoneNumber != null){
+                isPublishedByTheCurrUser = publishedBy.equalsIgnoreCase(userPhoneNumber);
+            }
 
             condition = (!currFragmentIsLeadManagement && !isPublishedByTheCurrUser) || (currFragmentIsLeadManagement && isPublishedByTheCurrUser);
             if (condition) {
@@ -558,6 +569,7 @@ public class FireBaseHandler {
         GeoQuery geoQuery = geoFirestore.queryAtLocation(currentLocation, maxRadius);
         geoQuery.removeAllListeners();
         counterOfGetDistanceAndTIme = 0;
+        newShuttleFound = false;
         shuttleLogic = new ShuttleLogic(context);
         logicHandler.setInFetchingDataProgress(true);
         this.currentLocation = new Location(logicHandler.getLastLocation());
@@ -568,6 +580,7 @@ public class FireBaseHandler {
                 public void onKeyEntered(String s, GeoPoint geoPoint) {
                     if (!alreadyCheckedShuttlesIDs.contains(s) && !delayedNearShuttles.values().contains(s)) {
                         availableShuttlesFoundBasicInfo.add(new ShuttleIDAndGeoPoint(s, geoPoint));
+                        newShuttleFound = true;
                     }
                 }
 
@@ -590,7 +603,9 @@ public class FireBaseHandler {
                         logicHandler.setInFetchingDataProgress(false);
                     }
                     else{
-                        getNearestNShuttles(5);
+                        if(newShuttleFound){
+                            getNearestNShuttles(5);
+                        }
                     }
                 }
 
@@ -747,7 +762,12 @@ public class FireBaseHandler {
             commissionFee = 0;
         }
         if(shuttleData.get("shuttleDistanceInKm") != null) {
-            shuttleDistanceInKm = (double) shuttleData.get("shuttleDistanceInKm");
+            try {
+                shuttleDistanceInKm = (double) shuttleData.get("shuttleDistanceInKm");
+            }
+            catch (Exception e){
+                shuttleDistanceInKm = (double) ((long)shuttleData.get("shuttleDistanceInKm"));
+            }
         }
         else{
             shuttleDistanceInKm = 0;
@@ -980,7 +1000,8 @@ public class FireBaseHandler {
     public void editShuttle(String shuttleID, ShuttleItem item) {
         final DocumentReference documentReference = db.collection("soldShuttles").document(shuttleID);
         documentReference.set(item)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
+                .addOnSuccessListener(
+                        aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Error writing document", e));
     }
 }
