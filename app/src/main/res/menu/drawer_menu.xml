@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:id="@+id/menu_group">
+
+        <item
+            android:id="@+id/home_menu_item"
+            android:icon="@drawable/baseline_home_black_18dp"
+            android:title="@string/home" />
+        <item
+            android:id="@+id/monitoring_report_menu_item"
+            android:icon="@drawable/report_icon"
+            android:title="@string/monitoring_report" />
+        <item
+            android:id="@+id/settings_menu_item"
+            android:icon="@drawable/settings_icon"
+            android:title="@string/settings" />
+    </group>
+
+</menu>

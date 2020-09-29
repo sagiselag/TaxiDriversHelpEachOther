@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#2B3467">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/driver_CL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/view2"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerHorizontal="true"
+            android:elevation="12dp"
+            android:innerRadius="0dp"
+            android:shape="ring"
+            android:thicknessRatio="1.9"
+            app:cardCornerRadius="40dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/user_imageView"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:clickable="true"
+                tools:srcCompat="@tools:sample/avatars" />
+        </androidx.cardview.widget.CardView>
+
+        <TextView
+            android:id="@+id/driverNameTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:clickable="true"
+            android:text="@string/driver_name"
+            android:textColor="@color/places_text_white_alpha_87"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view2" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/summery_CL"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        app:layout_constraintBottom_toBottomOf="@+id/driver_CL"
+        app:layout_constraintStart_toEndOf="@id/driver_CL"
+        app:layout_constraintTop_toTopOf="@id/driver_CL">
+
+        <TextView
+            android:id="@+id/balance_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:clickable="true"
+            android:gravity="center"
+            android:text="@string/balance"
+            android:textColor="@color/places_text_white_alpha_87"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@+id/menu_balance_imageView"
+            app:layout_constraintStart_toEndOf="@+id/menu_balance_imageView"
+            app:layout_constraintTop_toTopOf="@+id/menu_balance_imageView" />
+
+        <ImageView
+            android:id="@+id/daily_balance_imageView3"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:layout_marginTop="8dp"
+            android:clickable="true"
+            app:layout_constraintStart_toStartOf="@+id/menu_balance_imageView"
+            app:layout_constraintTop_toBottomOf="@+id/menu_balance_imageView"
+            app:srcCompat="@drawable/baseline_attach_money_white_18dp" />
+
+        <TextView
+            android:id="@+id/balance_input_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:clickable="true"
+            android:text="50$"
+            android:textColor="@color/places_text_white_alpha_87"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@+id/balance_textView"
+            app:layout_constraintStart_toEndOf="@+id/balance_textView"
+            app:layout_constraintTop_toTopOf="@+id/balance_textView" />
+
+        <TextView
+            android:id="@+id/daily_balance_input_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:clickable="true"
+            android:text="1600$"
+            android:textColor="@color/places_text_white_alpha_87"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@+id/daily_balance_textView"
+            app:layout_constraintStart_toEndOf="@+id/daily_balance_textView"
+            app:layout_constraintTop_toTopOf="@+id/daily_balance_textView" />
+
+        <ImageView
+            android:id="@+id/menu_balance_imageView"
+            android:layout_width="wrap_content"
+            android:layout_height="30dp"
+            android:clickable="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/baseline_account_balance_wallet_white_18dp" />
+
+        <TextView
+            android:id="@+id/daily_balance_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:text="@string/daily_balance"
+            android:textColor="@color/places_text_white_alpha_87"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="@+id/daily_balance_imageView3"
+            app:layout_constraintStart_toStartOf="@+id/balance_textView"
+            app:layout_constraintTop_toTopOf="@+id/daily_balance_imageView3" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
