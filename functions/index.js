@@ -65,7 +65,7 @@ exports.scheduledFunctionForShuttlesWhichWouldBeRelevantInTenMin = functions.pub
 	  var idTodelete = doc.id;
 	  if(delayVal < 60){
 		  // Add a new document with a generated id.
-			db.collection("shuttles").add(docItem);
+			db.collection("immediateShuttles").add(docItem);
 			db.collection("todayDelayedShuttles").doc(doc.id).delete();		
 	  }
 	  else{
@@ -111,7 +111,7 @@ const immediateDelay = 15;
 exports.scheduledFunctionForImmediateShuttles = functions.pubsub.schedule('every 1 minutes').onRun((context) =>
                 {
                     console.log('This will be run every 1 minutes!');				
-					return !db.collection("shuttles").get().then(function(querySnapshot)
+					return !db.collection("immediateShuttles").get().then(function(querySnapshot)
                     {
                             querySnapshot.forEach(function(doc)
                             {
@@ -121,7 +121,7 @@ exports.scheduledFunctionForImmediateShuttles = functions.pubsub.schedule('every
 								if(docItem.delayInMinutes > 0){
 									console.log("update delayInMinutes for ", doc.id);
 									var newDelayVal = docItem.delayInMinutes - 1;
-									db.collection('shuttles').doc(doc.id).update(
+									db.collection('immediateShuttles').doc(doc.id).update(
                                             {
                                                 delayInMinutes: newDelayVal
                                             });
@@ -129,12 +129,12 @@ exports.scheduledFunctionForImmediateShuttles = functions.pubsub.schedule('every
 								else if(docItem.delayInMinutes <= 0){
 									// move shuttle to expired shuttles
 									db.collection("expiredShuttles").add(docItem);
-									db.collection("shuttles").doc(doc.id).delete();		
+									db.collection("immediateShuttles").doc(doc.id).delete();		
 								}
 								else{
 									console.log("initialize delayInMinutes for ", doc.id);
 										// initialize the "delayInMinutes" field of the immediateShuttle
-										db.collection('shuttles').doc(doc.id).update(
+										db.collection('immediateShuttles').doc(doc.id).update(
 												{
 													delayInMinutes: immediateDelay
 												});

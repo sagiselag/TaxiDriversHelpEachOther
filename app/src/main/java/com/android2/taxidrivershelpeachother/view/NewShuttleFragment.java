@@ -264,5 +264,10 @@ public class NewShuttleFragment extends Fragment implements IRefreshableFragment
         if(fixedPrice_cb != null) {
             fixedPrice_cb.setChecked(false);
         }
+
+        if(commissionFee_et != null) {
+            commissionFee_et.setText(Currency.getInstance(Locale.getDefault()).getSymbol() + "10");
+            Selection.setSelection(commissionFee_et.getText(), commissionFee_et.getText().length());
+        }
     }
 }

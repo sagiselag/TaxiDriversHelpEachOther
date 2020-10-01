@@ -1,5 +1,6 @@
 package com.android2.taxidrivershelpeachother.model;
 
+import com.android2.taxidrivershelpeachother.controller.LogicHandler;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.beans.PropertyChangeEvent;
@@ -10,9 +11,12 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.TimeZone;
 
 public class ShuttleItem implements Serializable {
 
@@ -23,6 +27,7 @@ public class ShuttleItem implements Serializable {
     private Passenger passenger;
     private LatLng originLatLng;
     private String id, handlingDriverPhone;
+    private SimpleDateFormat localizedSimpleDateFormat = new SimpleDateFormat();
 
     public String getHandlingDriverPhone() {
         return handlingDriverPhone;

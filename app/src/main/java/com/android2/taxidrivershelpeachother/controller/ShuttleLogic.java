@@ -20,7 +20,6 @@ import com.android2.taxidrivershelpeachother.model.Passenger;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
 import com.android2.taxidrivershelpeachother.model.VolleyHandler;
 import com.android2.taxidrivershelpeachother.view.AvailableShuttleFragment;
-import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.android2.taxidrivershelpeachother.view.NewShuttleFragment;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.maps.model.LatLng;
@@ -39,10 +38,12 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import static android.app.Activity.RESULT_CANCELED;
@@ -65,6 +66,8 @@ public class ShuttleLogic {
     private Date dateForParsing;
     private Fragment fragment;
     private String shuttleID = null;
+    private FireBaseHandler fireBaseHandler = FireBaseHandler.getInstance();
+    private EditText timeET, dateET;
 
     public String getShuttleID() {
         return shuttleID;
@@ -195,45 +198,75 @@ public class ShuttleLogic {
                 }
                 else {
                     dateForParsing = new Date(selectionLong);
-                    selectedDate = LogicHandler.onlyDateSimpleDateFormat.format(selection);
+                    selectedDate = LogicHandler.onlyDateSimpleDateFormatUTC.format(selection);
                     date.setText(selectedDate);
                 }
+
+                replaceImmediateStrInTimePicker();
             }
         });
     }
 
+    private void replaceImmediateStrInTimePicker(){
+        timeET = view.findViewById(R.id.SIC_time);
+        dateET = view.findViewById(R.id.SIC_date);
+
+        boolean timeIsImmediate = timeET.getText().toString().equalsIgnoreCase(context.getString(R.string.immediate));
+        boolean dateIsToday = dateET.getText().toString().equalsIgnoreCase(context.getString(R.string.today));
+
+        if(!dateIsToday && timeIsImmediate){
+            timeET.setText(getTimeStr(Calendar.getInstance().get(Calendar.HOUR_OF_DAY), Calendar.getInstance().get(Calendar.MINUTE)));
+        }
+    }
+
+    private String getTimeStr(int hourOfDay, int minute){
+        String timeStr;
+
+        if(hourOfDay < 10){
+            timeStr = "0" + hourOfDay;
+        }
+        else{
+            timeStr = String.valueOf(hourOfDay);
+        }
+        timeStr += ":";
+        if (minute > 9) {
+            timeStr += minute;
+        } else {
+            timeStr += "0" + minute;
+        }
+
+        return timeStr;
+    }
+
+
     private void setTimePicker(){
-        final EditText date = view.findViewById(R.id.SIC_date);
-        final EditText time = view.findViewById(R.id.SIC_time);
-        if(time != null) {
-            time.setText(context.getString(R.string.immediate));
+        dateET = view.findViewById(R.id.SIC_date);
+        timeET = view.findViewById(R.id.SIC_time);
+
+        if(timeET != null) {
+            String dateStr = dateET.getText().toString();
+            String todayStr = context.getString(R.string.today);
+
+            if(dateStr.equalsIgnoreCase(todayStr)){
+                timeET.setText(context.getString(R.string.immediate));
+            }
+            else{
+                timeET.setText(getTimeStr(Calendar.getInstance().get(Calendar.HOUR_OF_DAY), Calendar.getInstance().get(Calendar.MINUTE)));
+            }
 
             final TimePickerDialog.OnTimeSetListener timeSetListener = new TimePickerDialog.OnTimeSetListener() {
                 @Override
                 public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-                    String day = date.getText().toString();
-                    String timeStr;
+                    String day = dateET.getText().toString();
                     if (timeIsInFuture(day, hourOfDay, minute)) {
-                        if(hourOfDay < 10){
-                            timeStr = "0" + hourOfDay;
-                        }
-                        else{
-                            timeStr = String.valueOf(hourOfDay);
-                        }
-                        timeStr += ":";
-                        if (minute > 9) {
-                            timeStr += minute;
-                        } else {
-                            timeStr += "0" + minute;
-                        }
-                        time.setText(timeStr);
+                        timeET.setText(getTimeStr(hourOfDay, minute));
                     } else {
-                        time.setText(context.getString(R.string.immediate));
+                        timeET.setText(context.getString(R.string.immediate));
                     }
                 }
             };
 
-            time.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            timeET.setOnFocusChangeListener(new View.OnFocusChangeListener() {
                 @Override
                 public void onFocusChange(View v, boolean hasFocus) {
                     if (hasFocus) {
@@ -361,14 +394,14 @@ public class ShuttleLogic {
                     shuttleItem.setDistanceToShuttleInMinutes(Integer.parseInt(durationStr));
 
                     if (availableShuttleFragment == null) {
-                        FireBaseHandler.getInstance().sortAndSendShuttlesToDriver();
+                        fireBaseHandler.sortAndSendShuttlesToDriver();
                     }
                 }
                 catch (JSONException e) {
                     e.printStackTrace();
                     if (availableShuttleFragment == null) {
                         shuttleItem.setDistanceToShuttleInMinutes(-1);
-                        FireBaseHandler.getInstance().sortAndSendShuttlesToDriver();
+                        fireBaseHandler.sortAndSendShuttlesToDriver();
                     }
                 }
                 return null;
@@ -380,6 +413,7 @@ public class ShuttleLogic {
         String originAddress, destinationAddress, remarks , shuttleDate, shuttleTime, passengerName, passengerPhone;
         boolean isFixedPrice;
         int price = 0, commissionFee;
+        String collectionName;
         Passenger passenger;
 
         if(newShuttleFragment != null) {
@@ -414,11 +448,12 @@ public class ShuttleLogic {
             shuttleItem = new ShuttleItem(originLatLng, originAddress, destinationAddress, remarks, shuttleDate, shuttleTime, price, commissionFee, passenger,
                     shuttleDistanceInKm, shuttleDistanceInMinutes);
 
-            FireBaseHandler.getInstance().addNewShuttleToDB(shuttleItem, "shuttles");
+            collectionName = fireBaseHandler.getCollectionNameForShuttle(shuttleItem, false);
+
+            fireBaseHandler.addNewShuttleToDB(shuttleItem, collectionName);
         }
         else{
-//            FireBaseHandler.getInstance().addNewShuttleToDB(shuttleItem, "soldShuttles");
-            FireBaseHandler.getInstance().editShuttle(shuttleID, shuttleItem);
+            fireBaseHandler.editShuttle(shuttleID, shuttleItem);
         }
 
     }

@@ -52,7 +52,7 @@ public class AvailableShuttleFragment extends Fragment implements IRefreshableFr
         super.onCreate(savedInstanceState);
         fragmentManager = getActivity().getSupportFragmentManager();
 
-        FireBaseHandler.getInstance().getAvailableShuttlesFromDB(this);
+//        FireBaseHandler.getInstance().getAvailableShuttlesFromDB(this);
     }
 
     @Nullable

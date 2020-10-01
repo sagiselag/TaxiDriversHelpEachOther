@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
 import android.net.Uri;
-import android.net.wifi.hotspot2.pps.Credential;
 import android.util.Log;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -22,19 +21,15 @@ import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
 import com.android2.taxidrivershelpeachother.view.AuthenticationFragment;
 import com.android2.taxidrivershelpeachother.view.AvailableShuttleFragment;
 import com.android2.taxidrivershelpeachother.view.IRefreshableFragment;
-import com.android2.taxidrivershelpeachother.view.LoginFragment;
 import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.android2.taxidrivershelpeachother.view.MenuFragment;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskExecutors;
 import com.google.firebase.FirebaseException;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
@@ -47,13 +42,9 @@ import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-import com.google.firebase.firestore.auth.CredentialsProvider;
 import com.google.firebase.functions.FirebaseFunctions;
-import com.google.firebase.functions.HttpsCallableResult;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 
 import org.imperiumlabs.geofirestore.GeoFirestore;
@@ -64,15 +55,16 @@ import org.imperiumlabs.geofirestore.listeners.GeoQueryEventListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static android.content.ContentValues.TAG;
 
@@ -88,7 +80,7 @@ public class FireBaseHandler {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
     private FirebaseFunctions mFunctions = FirebaseFunctions.getInstance();
-    private GeoFirestore geoFirestore = new GeoFirestore(db.collection("shuttles"));
+    private GeoFirestore geoFirestore = new GeoFirestore(db.collection("immediateShuttles"));
     private GeoFirestore todayRelevantGeoFireStore;
     private GeoFirestore tomorrowRelevantGeoFireStore;
     private EditText passwordEditText;
@@ -118,15 +110,32 @@ public class FireBaseHandler {
     private Fragment fragment;
     private MenuFragment menuFragment;
     private boolean newShuttleFound = false;
-    private List<String> collectionsNames = new ArrayList<>(Arrays.asList("shuttles", "todayDelayedShuttles", "delayedShuttles", "soldShuttles"));
+    // "immediateShuttles", "todayDelayedShuttles", "tomorrowDelayedShuttles", "delayedShuttles", "soldShuttles", "expiredShuttles"
+    private List<String> availableUnsoldShuttlesCollectionsNames;
+    private List<String> notExpiredShuttlesCollectionsNames;
+    private List<String> allCollectionsNames;
+    private Date date, now;
+
 
 
     public void setUserPhoneNumber(String userPhoneNumber) {
         this.userPhoneNumber = userPhoneNumber;
     }
 
+    private void initCollectionNames(){
+        availableUnsoldShuttlesCollectionsNames = new ArrayList<>(Arrays.asList("immediateShuttles", "todayDelayedShuttles", "tomorrowDelayedShuttles", "delayedShuttles"));
+        notExpiredShuttlesCollectionsNames = new ArrayList<>();
+        allCollectionsNames = new ArrayList<>();
+
+        notExpiredShuttlesCollectionsNames.addAll(availableUnsoldShuttlesCollectionsNames);
+        notExpiredShuttlesCollectionsNames.add("soldShuttles");
+        allCollectionsNames.addAll(notExpiredShuttlesCollectionsNames);
+        allCollectionsNames.add("expiredShuttles");
+    }
+
     private FireBaseHandler() {
         firebaseAuth = FirebaseAuth.getInstance();
+        initCollectionNames();
 
         mCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
@@ -442,22 +451,16 @@ public class FireBaseHandler {
                 .add(shuttle)
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
-                    geoFirestore.setLocation(documentReference.getId(), geoPoint);
+                    if(!collectionName.equalsIgnoreCase("expiredShuttles")){
+                        geoFirestore.setLocation(documentReference.getId(), geoPoint);
+                    }
+                    else{
+                        Log.d(TAG, "Doc ID: " + documentReference.getId() + " added to expiredShuttles");
+                    }
+
                     ((IRefreshableFragment)fragment).refresh();
                 })
                 .addOnFailureListener(e -> Log.w(TAG, "Error adding document", e));
-
-//        db.collection("shuttles")
-//                .get()
-//                .addOnCompleteListener(task -> {
-//                    if (task.isSuccessful()) {
-//                        for (QueryDocumentSnapshot document : task.getResult()) {
-//                            Log.d(TAG, document.getId() + " => " + document.getData());
-//                        }
-//                    } else {
-//                        Log.w(TAG, "Error getting documents.", task.getException());
-//                    }
-//                });
     }
 
     public FirebaseFirestore getDb() {
@@ -465,20 +468,14 @@ public class FireBaseHandler {
     }
 
     public void getAvailableShuttlesFromDB(final AvailableShuttleFragment availableShuttleFragment) {
-        final ShuttleLogic shuttleLogic = new ShuttleLogic(availableShuttleFragment.getContext());
+//        final ShuttleLogic shuttleLogic = new ShuttleLogic(availableShuttleFragment.getContext());
         String fragmentName = availableShuttleFragment.getFragmentName();
 
         currFragment = availableShuttleFragment;
         if(fragmentName.equalsIgnoreCase("availableShuttles")) {
-            Query immediateShuttlesQuery = db.collection("shuttles");
-            Query todayDelayedShuttlesQuery = db.collection("todayDelayedShuttles");
-            Query tomorrowShuttlesQuery = db.collection("tomorrowDelayedShuttles");
-            Query delayedShuttlesQuery = db.collection("delayedShuttles");
-
-            invokeGetShuttlesQuery(immediateShuttlesQuery, availableShuttleFragment);
-            invokeGetShuttlesQuery(todayDelayedShuttlesQuery, availableShuttleFragment);
-            invokeGetShuttlesQuery(tomorrowShuttlesQuery, availableShuttleFragment);
-            invokeGetShuttlesQuery(delayedShuttlesQuery, availableShuttleFragment);
+            for (String collection: availableUnsoldShuttlesCollectionsNames) {
+                invokeGetShuttlesQuery(db.collection(collection), availableShuttleFragment);
+            }
         }
         else if(fragmentName.equalsIgnoreCase("commitmentShuttles")) {
             Query soldShuttlesQuery = db.collection("soldShuttles").whereEqualTo("handlingDriverPhone", userPhoneNumber);
@@ -486,11 +483,9 @@ public class FireBaseHandler {
             invokeGetShuttlesQuery(soldShuttlesQuery, availableShuttleFragment);
         }
         else if(fragmentName.equalsIgnoreCase("leadManagement")) {
-            Query waitingForDriverShuttlesQuery = db.collection("shuttles").whereEqualTo("publishedBy", userPhoneNumber);
-            Query soldShuttlesQuery = db.collection("soldShuttles").whereEqualTo("publishedBy", userPhoneNumber);
-
-            invokeGetShuttlesQuery(waitingForDriverShuttlesQuery, availableShuttleFragment);
-            invokeGetShuttlesQuery(soldShuttlesQuery, availableShuttleFragment);
+            for (String collection: notExpiredShuttlesCollectionsNames) {
+                invokeGetShuttlesQuery(db.collection(collection).whereEqualTo("publishedBy", userPhoneNumber), availableShuttleFragment);
+            }
         }
     }
 
@@ -550,8 +545,8 @@ public class FireBaseHandler {
                 o2dateStr = o2.getShuttleDate();
                 o2timeStr = o2.getShuttleTime().replace(" ","");
 
-                Date o1date = LogicHandler.dateAndTimeSimpleDateFormat.parse(o1dateStr + " " + o1timeStr);
-                Date o2date = LogicHandler.dateAndTimeSimpleDateFormat.parse(o2dateStr + " " + o2timeStr);
+                Date o1date = LogicHandler.dateAndTimeSimpleDateFormatUTC.parse(o1dateStr + " " + o1timeStr);
+                Date o2date = LogicHandler.dateAndTimeSimpleDateFormatUTC.parse(o2dateStr + " " + o2timeStr);
                 if(o1date.before(o2date)) {
                     return -1;
                 }
@@ -656,7 +651,7 @@ public class FireBaseHandler {
         for (int i = 0; i < actualNumberOfShuttlesToCollect; i++) {
             final String ShuttleID = availableShuttlesFoundBasicInfo.get(i).getId();
             final Location location = currentLocation;
-            DocumentReference documentReference = db.collection("shuttles").document(availableShuttlesFoundBasicInfo.get(i).getId());
+            DocumentReference documentReference = db.collection("immediateShuttles").document(availableShuttlesFoundBasicInfo.get(i).getId());
             documentReference.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d(TAG, "onKeyEntered + onComplete " + task.getResult().getId() + " => " + task.getResult().getData());
@@ -822,23 +817,15 @@ public class FireBaseHandler {
                     DocumentSnapshot document = task.getResult();
                     if (document != null && document.getData() != null) {
                         toPath.set(document.getData())
-                                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                    @Override
-                                    public void onSuccess(Void aVoid) {
-                                        Log.d(TAG, "DocumentSnapshot successfully written!");
-                                        if(handlingDriverPhoneNeedToBeDeleted){
-                                            toPath.update("handlingDriverPhone", FieldValue.delete());
-                                            handlingDriverPhoneNeedToBeDeleted = false;
-                                        }
-                                        deleteShuttle(fromPath);
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d(TAG, "DocumentSnapshot successfully written!");
+                                    if(handlingDriverPhoneNeedToBeDeleted){
+                                        toPath.update("handlingDriverPhone", FieldValue.delete());
+                                        handlingDriverPhoneNeedToBeDeleted = false;
                                     }
+                                    deleteShuttle(fromPath);
                                 })
-                                .addOnFailureListener(new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.w(TAG, "Error writing document", e);
-                                    }
-                                });
+                                .addOnFailureListener(e -> Log.w(TAG, "Error writing document", e));
                     } else {
                         Log.d(TAG, "No such document");
                     }
@@ -849,65 +836,62 @@ public class FireBaseHandler {
         }
     }
 
-    public void putShuttleInTodayDelayedShuttles(final String shuttleID, int delayInMinutes) {
-        final DocumentReference documentReference = db.collection("todayDelayedShuttles").document();
-        db.collection("shuttles").document(shuttleID).update("delayInMinutes", delayInMinutes).addOnCompleteListener(task -> {
-            if(task.isSuccessful()){
-                moveFirestoreDocument(db.collection("shuttles").document(shuttleID), documentReference);
-                removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
-            }
-        });
-    }
-
     private void putCanceledShuttleInShuttles(final String shuttleID) {
         handlingDriverPhoneNeedToBeDeleted = true;
-        DocumentReference documentReference = db.collection("shuttles").document();
-        moveFirestoreDocument(db.collection("soldShuttles").document(shuttleID), documentReference);
+        String collection = "soldShuttles";
+        db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (task.getResult().exists()) {
+                            Log.d(TAG, shuttleID + " found in " + collection);
+                            editShuttle(shuttleID, parseShuttle(task.getResult().getData()));
+                        }
+                    }
+                });
     }
 
     public void putShuttleInExpiredShuttles(final String shuttleID) {
         DocumentReference documentReference = db.collection("expiredShuttles").document();
-        moveFirestoreDocument(db.collection("shuttles").document(shuttleID), documentReference);
-        removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
-    }
-
-    private void moveEverythingFromExpiredToCurrent(){
-        db.collection("expiredShuttles").get().addOnCompleteListener(task -> {
-            if(task.isSuccessful()){
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    DocumentReference documentReference = db.collection("shuttles").document();
-                    moveFirestoreDocument(document.getReference(), documentReference);
-                }
-            }
-        });
-    }
-
-    public void putShuttleInTomorrowDelayedShuttles(String shuttleID) {
-        DocumentReference documentReference = db.collection("tomorrowDelayedShuttles").document();
-        moveFirestoreDocument(db.collection("shuttles").document(shuttleID), documentReference);
-        removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
-    }
-
-    public void putShuttleInDelayedShuttles(String shuttleID) {
-        DocumentReference documentReference = db.collection("delayedShuttles").document();
-        moveFirestoreDocument(db.collection("shuttles").document(shuttleID), documentReference);
+        moveFirestoreDocument(db.collection("immediateShuttles").document(shuttleID), documentReference);
         removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
     }
 
     public void takeShuttle(final String shuttleID){
-        final List<DocumentReference> documentReferences = new ArrayList<>();
-        int index = 0;
-
         succeedToTakeShuttle = false;
         someoneElseTookTheShuttle = false;
 
-        documentReferences.add(db.collection("shuttles").document(shuttleID));
-        documentReferences.add(db.collection("todayDelayedShuttles").document(shuttleID));
-        documentReferences.add(db.collection("delayedShuttles").document(shuttleID));
+        for (String collectionName: availableUnsoldShuttlesCollectionsNames) {
+            if(!someoneElseTookTheShuttle && !succeedToTakeShuttle) {
+                moveShuttleFromCurrentCollectionToSoldCollection(shuttleID, db.collection(collectionName).document(shuttleID));
+            }
+        }
+    }
 
-        while (index < documentReferences.size() && !someoneElseTookTheShuttle && !succeedToTakeShuttle)
-        {
-            moveShuttleFromCurrentCollectionToSoldCollection(shuttleID, documentReferences.get(index++));
+    public void changeShuttleCollection(final String shuttleID, String destCollectionName, List<String> searchableCollections, boolean withDelayField) {
+        final DocumentReference documentReference = db.collection(destCollectionName).document();
+        AtomicBoolean isFound = new AtomicBoolean(false);
+
+        for (String collection: searchableCollections) {
+            db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                    if (task.getResult().exists() && !isFound.get()) {
+                        isFound.set(true);
+                        Log.d(TAG, shuttleID + " found in " + collection);
+                        if(withDelayField) {
+                            int delayInMinutes = calcDelayInMinutes(parseShuttle(task.getResult().getData()));
+                            db.collection(collection).document(shuttleID).update("delayInMinutes", delayInMinutes).addOnCompleteListener(task1 -> {
+                                moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
+                                removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
+                            });
+                        }
+                        else{
+                            db.collection(collection).document(shuttleID).update("delayInMinutes", FieldValue.delete()).addOnCompleteListener(task12 -> {
+                                moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
+                                removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
+                            });
+                        }
+                    }
+                }
+            });
         }
     }
 
@@ -919,7 +903,8 @@ public class FireBaseHandler {
                 Map<String, Object> shuttleData = task.getResult().getData();
                 if (shuttleData != null) {
                     String handlingDriverPhone = (String) shuttleData.get("handlingDriverPhone");
-                    // TODO remove true from the condition - already done
+
+                    // unsold shuttle indicator
                     if (handlingDriverPhone == null) {
                         // (async) Update one field
                         documentReference.update("handlingDriverPhone", userPhoneNumber).addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -927,6 +912,10 @@ public class FireBaseHandler {
                             public void onComplete(@NonNull Task<Void> task) {
                                 putShuttleInSoldShuttles(shuttleID);
                                 // TODO show you got the shuttle
+                                succeedToTakeShuttle = true;
+
+                                // TODO payment
+
                             }
                         });
                     }
@@ -946,22 +935,17 @@ public class FireBaseHandler {
     public void putShuttleInSoldShuttles(String shuttleID) {
         final List<DocumentReference> documentReferences = new ArrayList<>();
         final DocumentReference documentReference = db.collection("soldShuttles").document();
-        int index = 0;
+//        int index = 0;
 
-        documentReferences.add(db.collection("shuttles").document(shuttleID));
-        documentReferences.add(db.collection("todayDelayedShuttles").document(shuttleID));
-        documentReferences.add(db.collection("delayedShuttles").document(shuttleID));
-
-        while (index < documentReferences.size())
-        {
-            moveFirestoreDocument(documentReferences.get(index++), documentReference);
+        for (String collectionName: availableUnsoldShuttlesCollectionsNames) {
+            moveFirestoreDocument(db.collection(collectionName).document(shuttleID), documentReference);
         }
     }
 
     public void cancelShuttle(String shuttleID) {
         putCanceledShuttleInShuttles(shuttleID);
 
-        // TODO refund user Bit account and don't pay to seller
+        // TODO refund user payment account and don't pay to seller
     }
 
     public void getDriverNameAndPhoneFromDB(String shuttleID, final ShuttleItemAdapter.ItemViewHolder holder) {
@@ -1002,7 +986,7 @@ public class FireBaseHandler {
     }
 
     public void deleteShuttleFromDB(String shuttleID) {
-        for (String collection: collectionsNames) {
+        for (String collection: notExpiredShuttlesCollectionsNames) {
             db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     if (task.getResult().exists()) {
@@ -1015,14 +999,21 @@ public class FireBaseHandler {
     }
 
     public void editShuttle(String shuttleID, ShuttleItem item) {
-        for (String collection: collectionsNames) {
+        for (String collection: notExpiredShuttlesCollectionsNames) {
             db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     if (task.getResult().exists()) {
                         db.collection(collection).document(shuttleID).set(item).addOnSuccessListener(
-                                aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
+                                new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void aVoid) {
+                                        Log.d(TAG, "DocumentSnapshot successfully written!");
+                                        item.setId(shuttleID);
+                                        getCollectionNameForShuttle(item, true);
+                                        ((IRefreshableFragment)fragment).refresh();
+                                    }
+                                })
                                 .addOnFailureListener(e -> Log.w(TAG, "Error writing document", e));
-                        ((IRefreshableFragment)fragment).refresh();
                     }
                 }
             });
@@ -1031,6 +1022,102 @@ public class FireBaseHandler {
 
     public void signOut() {
         firebaseAuth.signOut();
+    }
+
+    private int calcDelayInMinutes(ShuttleItem shuttleItem){
+        int hour, minutes, shuttleHour, shuttleMinutes, index, hourDist, minutesDist;
+        String shuttleTimeStr = shuttleItem.getShuttleTime().replaceAll(" ","");
+        date = null;
+        now = new Date();
+        hour = LocalDateTime.now().getHour();
+        minutes = LocalDateTime.now().getMinute();
+        index = shuttleTimeStr.indexOf(":");
+        shuttleHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
+        shuttleMinutes = Integer.valueOf(shuttleTimeStr.substring(index+1));
+        hourDist = shuttleHour - hour;
+        minutesDist = shuttleMinutes - minutes;
+        minutesDist += hourDist * 60;
+
+        return minutesDist;
+    }
+
+    public String getCollectionNameForShuttle(ShuttleItem shuttleItem, boolean moveShuttleToCorrectCollection){
+        // "immediateShuttles", "todayDelayedShuttles", tomorrowDelayedShuttles, "delayedShuttles", "soldShuttles", "expiredShuttles"
+        String collectionName = null;
+        int hour, shuttleHour, index, hourDist, minutesDist;
+        String shuttleTimeStr = shuttleItem.getShuttleTime().replaceAll(" ","");
+        String shuttleDateStr = shuttleItem.getShuttleDate();
+        date = null;
+        now = new Date();
+        hour = LocalDateTime.now().getHour();
+        index = shuttleTimeStr.indexOf(":");
+        shuttleHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
+        hourDist = shuttleHour - hour;
+        minutesDist = calcDelayInMinutes(shuttleItem);
+
+        try {
+            date = LogicHandler.dateAndTimeSimpleDateFormatUTC.parse(shuttleDateStr + " " + shuttleTimeStr);
+            if(date.before(now) && minutesDist < -15) {
+                collectionName = "expiredShuttles";
+                if(moveShuttleToCorrectCollection)
+                {
+                    changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
+                }
+            }
+            else {
+                if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTodayDateString())){
+                    // it may take some time to seller to fill the information for immediateShuttles
+                    if(hourDist >= -1 || hourDist <= 1){
+                        if(minutesDist >= -15 && minutesDist <= 60){
+                            collectionName = "immediateShuttles";
+                        }
+                        else if(minutesDist > 60){
+                            collectionName = "todayDelayedShuttles";
+                        }
+                        else if(minutesDist < -15){
+                            collectionName = "expiredShuttles";
+                        }
+                    }
+                    else if(hourDist > 1){
+                        collectionName = "todayDelayedShuttles";
+                    }
+                    else if(hourDist < 0){
+                        collectionName = "expiredShuttles";
+                    }
+                }
+                else if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTomorrowDateString())){
+                    collectionName = "tomorrowDelayedShuttles";
+                }
+                else{
+                    collectionName = "delayedShuttles";
+                }
+
+                if (moveShuttleToCorrectCollection) {
+                    switch (collectionName) {
+                        case "immediateShuttles":
+                            changeShuttleCollection(shuttleItem.getId(), "immediateShuttles", notExpiredShuttlesCollectionsNames, true);
+                            break;
+                        case "todayDelayedShuttles":
+                            changeShuttleCollection(shuttleItem.getId(), "todayDelayedShuttles", notExpiredShuttlesCollectionsNames, true);
+                            break;
+                        case "tomorrowDelayedShuttles":
+                            changeShuttleCollection(shuttleItem.getId(), "tomorrowDelayedShuttles", notExpiredShuttlesCollectionsNames, false);
+                            break;
+                        case "delayedShuttles":
+                            changeShuttleCollection(shuttleItem.getId(), "delayedShuttles", notExpiredShuttlesCollectionsNames, false);
+                            break;
+                        case "expiredShuttles":
+                            changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
+                            break;
+                    }
+                }
+            }
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return collectionName;
     }
 }
 

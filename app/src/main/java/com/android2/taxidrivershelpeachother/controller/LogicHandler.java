@@ -53,10 +53,12 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -90,11 +92,13 @@ public class LogicHandler {
     private static boolean isInFetchingDataProgress = false;
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static DateTimeFormatter htf = DateTimeFormatter.ofPattern("HH:mm");
-    public static SimpleDateFormat dateAndTimeSimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
-    public static SimpleDateFormat onlyDateSimpleDateFormat = new SimpleDateFormat("dd/MM/yyyy");
+    public static SimpleDateFormat dateAndTimeSimpleDateFormatUTC = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+    public static SimpleDateFormat onlyDateSimpleDateFormatUTC = new SimpleDateFormat("dd/MM/yyyy");
     private static LocalDateTime today;
     private static LocalDateTime tomorrow;
-
+    private static boolean notificationChannelIsInitialized = false;
+    private NotificationChannel notificationChannel;
+    private NotificationCompat.Builder builder;
 
 
 
@@ -224,10 +228,29 @@ public class LogicHandler {
         }
     }
 
+    private void initNotificationChannelAndBuilder(){
+        if(!notificationChannelIsInitialized){
+            String channelId = "taxi_drivers_leads_app_channel_id";
+            CharSequence channelName = "Taxi Drivers Help Each Other";
+
+            if (Build.VERSION.SDK_INT >= 26) {
+                int importance = NotificationManager.IMPORTANCE_HIGH;
+                notificationChannel = new NotificationChannel(channelId, channelName, importance);
+                notificationChannel.enableLights(true);
+                notificationChannel.setLightColor(Color.RED);
+                notificationChannel.enableVibration(true);
+                notificationChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 500, 400, 300, 200, 100});
+                notificationManager.createNotificationChannel(notificationChannel);
+            }
+
+            builder = new NotificationCompat.Builder(context, channelId);
+            builder.setSmallIcon(android.R.drawable.star_on);
+
+            notificationChannelIsInitialized = true;
+        }
+    }
+
     public void addNotification() {
-        String channelId = "taxi_drivers_leads_app_channel_id";
-        CharSequence channelName = "Taxi Drivers Help Each Other";
-        NotificationCompat.Builder builder;
         ShuttleItem newestShuttleItem;
         Intent intent;
         PendingIntent pendingIntent;
@@ -235,18 +258,7 @@ public class LogicHandler {
         String description = "";
         String originAdd, destAdd, distInMin;
 
-        if (Build.VERSION.SDK_INT >= 26) {
-            int importance = NotificationManager.IMPORTANCE_HIGH;
-            NotificationChannel notificationChannel = new NotificationChannel(channelId, channelName, importance);
-            notificationChannel.enableLights(true);
-            notificationChannel.setLightColor(Color.RED);
-            notificationChannel.enableVibration(true);
-            notificationChannel.setVibrationPattern(new long[]{100, 200, 300, 400, 500, 400, 300, 500, 400, 300, 200, 100});
-            notificationManager.createNotificationChannel(notificationChannel);
-        }
-
-        builder = new NotificationCompat.Builder(context, channelId);
-        builder.setSmallIcon(android.R.drawable.star_on);
+        initNotificationChannelAndBuilder();
 
         newestShuttleItem = FireBaseHandler.getInstance().getBestShuttle();
         distInMin = String.valueOf(newestShuttleItem.getDistanceToShuttleInMinutes());
@@ -261,6 +273,7 @@ public class LogicHandler {
         }
 
         shuttleTime = newestShuttleItem.getShuttleTime();
+        // shuttle time stored in UTC in the DB
         originAdd = newestShuttleItem.getOriginAddress();
         destAdd = newestShuttleItem.getDestinationAddress();
         description = distInMin + "\n" + pickupAt + ": " + shuttleTime + "\n" + from + "\n" + originAdd + "\n" + to + "\n" + destAdd;
@@ -331,58 +344,20 @@ public class LogicHandler {
         return lastLocation;
     }
 
-    public boolean checkIfShuttleIsImmediate(ShuttleItem shuttleItem){
-        boolean isImmediate = false;
-        int hour, minutes, shuttleHour, shuttleMinutes, minutesToShuttle, index, hourDist, minutesDist;
-        String shuttleTimeStr = shuttleItem.getShuttleTime().replaceAll(" ","");
-        String shuttleDateStr = shuttleItem.getShuttleDate();
-        Date date = null;
-        Date now = new Date();
-        try {
-            date = dateAndTimeSimpleDateFormat.parse(shuttleDateStr + " " + shuttleTimeStr);
-            if(date.before(now)){
-                FireBaseHandler.getInstance().putShuttleInExpiredShuttles(shuttleItem.getId());
-            }
-            else{
-                hour = LocalDateTime.now().getHour();
-                minutes = LocalDateTime.now().getMinute();
-                index = shuttleTimeStr.indexOf(":");
-                shuttleHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
-                shuttleMinutes = Integer.valueOf(shuttleTimeStr.substring(index+1));
-                hourDist = shuttleHour - hour;
-                minutesDist = shuttleMinutes - minutes;
-                minutesDist += hourDist * 60;
+    public boolean checkIfShuttleIsImmediate(ShuttleItem shuttleItem) {
+        return (FireBaseHandler.getInstance().getCollectionNameForShuttle(shuttleItem, true).equalsIgnoreCase("immediateShuttles"));
+    }
 
-                if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTodayDateString())){
-                    if(hourDist >= 0 || hourDist <= 1){
-                        if(minutesDist >= 0 && minutesDist <= 60){
-                            isImmediate = true;
-                        }
-                        else if(minutesDist > 60){
-                            FireBaseHandler.getInstance().putShuttleInTodayDelayedShuttles(shuttleItem.getId(), minutesDist);
-                        }
-                        else{
-                            FireBaseHandler.getInstance().putShuttleInExpiredShuttles(shuttleItem.getId());
-                        }
-                    }
-                    else if(hourDist > 1){
-                        FireBaseHandler.getInstance().putShuttleInTodayDelayedShuttles(shuttleItem.getId(), minutesDist);
-                    }
-                    else{
-                        FireBaseHandler.getInstance().putShuttleInExpiredShuttles(shuttleItem.getId());
-                    }
-                }
-                else if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTomorrowDateString())){
-                    FireBaseHandler.getInstance().putShuttleInTomorrowDelayedShuttles(shuttleItem.getId());
-                }
-                else{
-                    FireBaseHandler.getInstance().putShuttleInDelayedShuttles(shuttleItem.getId());
-                }
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+    public static Date localToGMT(Date localDateToUTC) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(localDateToUTC);
+        cal.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return cal.getTime();
+    }
 
-        return isImmediate;
+    public static Date gmtToLocalDate(Date dateToLocalizeFromUTC) {
+        String timeZone = Calendar.getInstance().getTimeZone().getID();
+        Date local = new Date(dateToLocalizeFromUTC.getTime() + TimeZone.getTimeZone(timeZone).getOffset(dateToLocalizeFromUTC.getTime()));
+        return local;
     }
 }
