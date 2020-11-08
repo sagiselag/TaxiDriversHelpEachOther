@@ -45,6 +45,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.google.protobuf.Empty;
 import com.squareup.picasso.Picasso;
 
 import org.imperiumlabs.geofirestore.GeoFirestore;
@@ -80,7 +81,7 @@ public class FireBaseHandler {
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
     private StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
     private FirebaseFunctions mFunctions = FirebaseFunctions.getInstance();
-    private GeoFirestore geoFirestore = new GeoFirestore(db.collection("immediateShuttles"));
+    private List<GeoFirestore> geoFirestoreList;
     private GeoFirestore todayRelevantGeoFireStore;
     private GeoFirestore tomorrowRelevantGeoFireStore;
     private EditText passwordEditText;
@@ -131,6 +132,12 @@ public class FireBaseHandler {
         notExpiredShuttlesCollectionsNames.add("soldShuttles");
         allCollectionsNames.addAll(notExpiredShuttlesCollectionsNames);
         allCollectionsNames.add("expiredShuttles");
+        allCollectionsNames.add("soldShuttlesHistory");
+
+        geoFirestoreList = new ArrayList<>();
+        for (String collection: allCollectionsNames) {
+            geoFirestoreList.add(new GeoFirestore(db.collection(collection)));
+        }
     }
 
     private FireBaseHandler() {
@@ -292,7 +299,7 @@ public class FireBaseHandler {
 //                        Uri downloadUrl = taskSnapshot.getStorage().getDownloadUrl().getResult();
                 })
                 .addOnFailureListener(exception -> {
-                    Log.d(TAG, "Upload failed:" + fullFileName);
+                    Log.d(TAG, "Upload failed:" + fullFileName + "\n" + exception.getMessage());
 
                     // Handle unsuccessful uploads
                     // ...
@@ -348,7 +355,12 @@ public class FireBaseHandler {
                         dateOfBirth = (String) userData.get("dateOfBirth");
                         imageUrl = (String) userData.get("imageUrl");
                         taxiInformationMap = (Map<String, Object>) userData.get("taxiInformation");
-                        balance = (long) userData.get("balance");
+                        try {
+                            balance = (long) userData.get("balance");
+                        }
+                        catch (Exception e){
+                            balance = new Double((double) userData.get("balance")).longValue();
+                        }
                         isAvailable = (boolean) userData.get("isAvailable");
                         complaints = (List<Complaint>) userData.get("complaints");
                         soldLeads = (List<ShuttleItem>) userData.get("soldLeads");
@@ -378,10 +390,10 @@ public class FireBaseHandler {
                 for (QueryDocumentSnapshot document : task.getResult()) {
                     Log.d(TAG, document.getId() + " => " + document.getData());
                     Map<String, Object> userData = document.getData();
-                    String supplierFirstName = (String) userData.get("firstName");
-                    String supplierLastName = (String) userData.get("lastName");
-                    if(supplierFirstName != null && supplierLastName != null){
-                        holder.setSupplierOrDriverNameTV(supplierFirstName + " " + supplierLastName);
+                    String firstName = (String) userData.get("firstName");
+                    String lastName = (String) userData.get("lastName");
+                    if(firstName != null && lastName != null){
+                        holder.setSupplierOrDriverNameTV(firstName + " " + lastName);
                     }
                 }
             } else {
@@ -444,6 +456,10 @@ public class FireBaseHandler {
         shuttle.put("originLatLng", newShuttleItem.getOriginLatLng());
         shuttle.put("publishedBy", loggedInUser.getPhone());
 
+        if(collectionName.equalsIgnoreCase(availableUnsoldShuttlesCollectionsNames.get(0)) || collectionName.equalsIgnoreCase(availableUnsoldShuttlesCollectionsNames.get(1))){
+            shuttle.put("delayInMinutes", calcDelayInMinutes(newShuttleItem));
+        }
+
         final GeoPoint geoPoint = new GeoPoint(newShuttleItem.getOriginLatLng().latitude, newShuttleItem.getOriginLatLng().longitude);
 
         // Add a new document with a generated ID
@@ -452,7 +468,7 @@ public class FireBaseHandler {
                 .addOnSuccessListener(documentReference -> {
                     Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
                     if(!collectionName.equalsIgnoreCase("expiredShuttles")){
-                        geoFirestore.setLocation(documentReference.getId(), geoPoint);
+                        geoFirestoreList.get(allCollectionsNames.indexOf(collectionName)).setLocation(documentReference.getId(), geoPoint);
                     }
                     else{
                         Log.d(TAG, "Doc ID: " + documentReference.getId() + " added to expiredShuttles");
@@ -567,7 +583,7 @@ public class FireBaseHandler {
 
 
     public void getAvailableShuttlesWithMaxDistanceFromCurrentLocationFromDB(final Context context, final GeoPoint currentLocation, final double maxRadius) {
-        GeoQuery geoQuery = geoFirestore.queryAtLocation(currentLocation, maxRadius);
+        GeoQuery geoQuery = geoFirestoreList.get(0).queryAtLocation(currentLocation, maxRadius);
         geoQuery.removeAllListeners();
         counterOfGetDistanceAndTIme = 0;
         newShuttleFound = false;
@@ -651,18 +667,19 @@ public class FireBaseHandler {
         for (int i = 0; i < actualNumberOfShuttlesToCollect; i++) {
             final String ShuttleID = availableShuttlesFoundBasicInfo.get(i).getId();
             final Location location = currentLocation;
+
             DocumentReference documentReference = db.collection("immediateShuttles").document(availableShuttlesFoundBasicInfo.get(i).getId());
             documentReference.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Log.d(TAG, "onKeyEntered + onComplete " + task.getResult().getId() + " => " + task.getResult().getData());
                     Map<String, Object> shuttleData = task.getResult().getData();
-                    if(shuttleData != null) {
+                    if (shuttleData != null) {
                         String publishedBy = (String) shuttleData.get("publishedBy");
                         // TODO remove true from the condition - already done
                         if (publishedBy != null && !publishedBy.equalsIgnoreCase(userPhoneNumber)) {
                             ShuttleItem shuttleItem = parseShuttle(shuttleData);
                             shuttleItem.setId(ShuttleID);
-                            if (logicHandler.checkIfShuttleIsImmediate(shuttleItem) == true) {
+                            if (logicHandler.checkIfShuttleIsImmediate(shuttleItem)) {
                                 availableShuttlesFound.add(shuttleItem);
                                 shuttleLogic.getTimeAndDistanceToShuttle(null, shuttleItem, location);
                             }
@@ -871,27 +888,28 @@ public class FireBaseHandler {
         AtomicBoolean isFound = new AtomicBoolean(false);
 
         for (String collection: searchableCollections) {
-            db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    if (task.getResult().exists() && !isFound.get()) {
-                        isFound.set(true);
-                        Log.d(TAG, shuttleID + " found in " + collection);
-                        if(withDelayField) {
-                            int delayInMinutes = calcDelayInMinutes(parseShuttle(task.getResult().getData()));
-                            db.collection(collection).document(shuttleID).update("delayInMinutes", delayInMinutes).addOnCompleteListener(task1 -> {
-                                moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
-                                removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
-                            });
-                        }
-                        else{
-                            db.collection(collection).document(shuttleID).update("delayInMinutes", FieldValue.delete()).addOnCompleteListener(task12 -> {
-                                moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
-                                removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
-                            });
+            if (!collection.equalsIgnoreCase(destCollectionName)) {
+                db.collection(collection).document(shuttleID).get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (task.getResult().exists() && !isFound.get()) {
+                            isFound.set(true);
+                            Log.d(TAG, shuttleID + " found in " + collection);
+                            if (withDelayField) {
+                                int delayInMinutes = calcDelayInMinutes(parseShuttle(task.getResult().getData()));
+                                db.collection(collection).document(shuttleID).update("delayInMinutes", delayInMinutes).addOnCompleteListener(task1 -> {
+                                    moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
+                                    removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
+                                });
+                            } else {
+                                db.collection(collection).document(shuttleID).update("delayInMinutes", FieldValue.delete()).addOnCompleteListener(task12 -> {
+                                    moveFirestoreDocument(db.collection(collection).document(shuttleID), documentReference);
+                                    removeIdFromAvailableShuttlesFoundBasicInfo(shuttleID);
+                                });
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
@@ -957,7 +975,7 @@ public class FireBaseHandler {
                 if (shuttleData != null) {
                     String handlingDriverPhone = (String) shuttleData.get("handlingDriverPhone");
                     if (handlingDriverPhone != null) {
-                        holder.setSupplierOrDriverNameTV(handlingDriverPhone);
+                        holder.setSupplierOrDriverPhoneTV(handlingDriverPhone);
                         getSupplierOrDriverNameFromDB(handlingDriverPhone, holder);
                     }
                 }
@@ -972,7 +990,9 @@ public class FireBaseHandler {
         fromPath.delete()
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "DocumentSnapshot successfully deleted!");
-                    ((IRefreshableFragment)fragment).refresh();
+                    if((IRefreshableFragment)fragment != null) {
+                        ((IRefreshableFragment) fragment).refresh();
+                    }
                 })
                 .addOnFailureListener(e -> Log.w(TAG, "Error deleting document", e));
     }
@@ -1042,7 +1062,7 @@ public class FireBaseHandler {
     }
 
     public String getCollectionNameForShuttle(ShuttleItem shuttleItem, boolean moveShuttleToCorrectCollection){
-        // "immediateShuttles", "todayDelayedShuttles", tomorrowDelayedShuttles, "delayedShuttles", "soldShuttles", "expiredShuttles"
+        // "immediateShuttles", "todayDelayedShuttles", tomorrowDelayedShuttles, "delayedShuttles", "soldShuttles", "expiredShuttles", "soldShuttlesHistory"
         String collectionName = null;
         int hour, shuttleHour, index, hourDist, minutesDist;
         String shuttleTimeStr = shuttleItem.getShuttleTime().replaceAll(" ","");
@@ -1057,66 +1077,78 @@ public class FireBaseHandler {
 
         try {
             date = LogicHandler.dateAndTimeSimpleDateFormatUTC.parse(shuttleDateStr + " " + shuttleTimeStr);
-            if(date.before(now) && minutesDist < -15) {
-                collectionName = "expiredShuttles";
-                if(moveShuttleToCorrectCollection)
-                {
-                    changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
+            // shuttle is sold
+            if (shuttleItem.getHandlingDriverPhone() != null && !shuttleItem.getHandlingDriverPhone().isEmpty() && !handlingDriverPhoneNeedToBeDeleted) {
+                if (date.before(now) && minutesDist < -45) {
+                    collectionName = "soldShuttlesHistory";
+                    if (moveShuttleToCorrectCollection) {
+                        changeShuttleCollection(shuttleItem.getId(), "soldShuttlesHistory", allCollectionsNames, false);
+                    }
+                } else {
+                    collectionName = "soldShuttles";
                 }
             }
+            // shuttle doesn't sold yet
             else {
-                if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTodayDateString())){
-                    // it may take some time to seller to fill the information for immediateShuttles
-                    if(hourDist >= -1 || hourDist <= 1){
-                        if(minutesDist >= -15 && minutesDist <= 60){
-                            collectionName = "immediateShuttles";
-                        }
-                        else if(minutesDist > 60){
+                if (date.before(now) && minutesDist < -15) {
+                    collectionName = "expiredShuttles";
+                    if (moveShuttleToCorrectCollection) {
+                        changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
+                    }
+                } else {
+                    if (shuttleDateStr.equalsIgnoreCase(LogicHandler.getTodayDateString())) {
+                        // it may take some time to seller to fill the information for immediateShuttles
+                        if (hourDist >= -1 || hourDist <= 1) {
+                            if (minutesDist >= -15 && minutesDist <= 60) {
+                                collectionName = "immediateShuttles";
+                            } else if (minutesDist > 60) {
+                                collectionName = "todayDelayedShuttles";
+                            } else if (minutesDist < -15) {
+                                collectionName = "expiredShuttles";
+                            }
+                        } else if (hourDist > 1) {
                             collectionName = "todayDelayedShuttles";
-                        }
-                        else if(minutesDist < -15){
+                        } else if (hourDist < 0) {
                             collectionName = "expiredShuttles";
                         }
+                    } else if (shuttleDateStr.equalsIgnoreCase(LogicHandler.getTomorrowDateString())) {
+                        collectionName = "tomorrowDelayedShuttles";
+                    } else {
+                        collectionName = "delayedShuttles";
                     }
-                    else if(hourDist > 1){
-                        collectionName = "todayDelayedShuttles";
-                    }
-                    else if(hourDist < 0){
-                        collectionName = "expiredShuttles";
-                    }
-                }
-                else if(shuttleDateStr.equalsIgnoreCase(LogicHandler.getTomorrowDateString())){
-                    collectionName = "tomorrowDelayedShuttles";
-                }
-                else{
-                    collectionName = "delayedShuttles";
-                }
 
-                if (moveShuttleToCorrectCollection) {
-                    switch (collectionName) {
-                        case "immediateShuttles":
-                            changeShuttleCollection(shuttleItem.getId(), "immediateShuttles", notExpiredShuttlesCollectionsNames, true);
-                            break;
-                        case "todayDelayedShuttles":
-                            changeShuttleCollection(shuttleItem.getId(), "todayDelayedShuttles", notExpiredShuttlesCollectionsNames, true);
-                            break;
-                        case "tomorrowDelayedShuttles":
-                            changeShuttleCollection(shuttleItem.getId(), "tomorrowDelayedShuttles", notExpiredShuttlesCollectionsNames, false);
-                            break;
-                        case "delayedShuttles":
-                            changeShuttleCollection(shuttleItem.getId(), "delayedShuttles", notExpiredShuttlesCollectionsNames, false);
-                            break;
-                        case "expiredShuttles":
-                            changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
-                            break;
-                    }
+                }
+            }
+            // moveShuttleToCorrectCollection if necessary
+            if (moveShuttleToCorrectCollection) {
+                switch (collectionName) {
+                    case "immediateShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "immediateShuttles", notExpiredShuttlesCollectionsNames, true);
+                        break;
+                    case "todayDelayedShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "todayDelayedShuttles", notExpiredShuttlesCollectionsNames, true);
+                        break;
+                    case "tomorrowDelayedShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "tomorrowDelayedShuttles", notExpiredShuttlesCollectionsNames, false);
+                        break;
+                    case "delayedShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "delayedShuttles", notExpiredShuttlesCollectionsNames, false);
+                        break;
+                    case "expiredShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "expiredShuttles", allCollectionsNames, false);
+                        break;
+                    case "soldShuttles":
+                        changeShuttleCollection(shuttleItem.getId(), "soldShuttles", notExpiredShuttlesCollectionsNames, true);
+                        break;
+                    case "soldShuttlesHistory":
+                        changeShuttleCollection(shuttleItem.getId(), "soldShuttlesHistory", allCollectionsNames, false);
+                        break;
                 }
             }
         }
         catch (ParseException e) {
             e.printStackTrace();
         }
-
         return collectionName;
     }
 }

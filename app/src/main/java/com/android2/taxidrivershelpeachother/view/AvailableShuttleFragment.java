@@ -8,6 +8,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.MenuLogic;
 import com.android2.taxidrivershelpeachother.controller.ShuttleItemAdapter;
+import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.Passenger;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
@@ -34,10 +36,22 @@ import static com.android2.taxidrivershelpeachother.view.MenuFragment.timeBetwee
 
 public class AvailableShuttleFragment extends Fragment implements IRefreshableFragment{
     private FragmentManager fragmentManager;
+    private int AUTOCOMPLETE_FROM_REQUEST_CODE = 2;
+    private int AUTOCOMPLETE_DESTINATION_REQUEST_CODE = 3;
     private RecyclerView shuttlesRecyclerView;
     private ShuttleItemAdapter shuttleItemAdapter;
     private List<ShuttleItem> shuttleItems = new ArrayList<>();
     private String fragmentName;
+    private ShuttleLogic shuttleLogic;
+    private TextView fromTV, destTV;
+
+    public void setFromTV(TextView fromTV) {
+        this.fromTV = fromTV;
+    }
+
+    public void setDestTV(TextView destTV) {
+        this.destTV = destTV;
+    }
 
     public AvailableShuttleFragment(String fragmentName){
         this.fragmentName = fragmentName;
@@ -51,8 +65,19 @@ public class AvailableShuttleFragment extends Fragment implements IRefreshableFr
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         fragmentManager = getActivity().getSupportFragmentManager();
-
+        shuttleLogic = new ShuttleLogic(getContext());
 //        FireBaseHandler.getInstance().getAvailableShuttlesFromDB(this);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+//        shuttleLogic.setFragment(this);
+//        shuttleLogic.setContext(getContext());
+//        shuttleLogic.setView(getView());
+//        fromTV = getView().findViewById(R.id.SIC_from);
+//        destTV = getView().findViewById(R.id.SIC_destination);
+        refresh();
     }
 
     @Nullable
@@ -100,5 +125,22 @@ public class AvailableShuttleFragment extends Fragment implements IRefreshableFr
     public void refresh(){
         getShuttleItems().clear();
         FireBaseHandler.getInstance().getAvailableShuttlesFromDB(this);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == AUTOCOMPLETE_FROM_REQUEST_CODE) {
+            shuttleLogic.putPlaceInformationInEditTextItemOnPlaceResult(resultCode, data, fromTV);
+            //TODO put local in origin address and placeAddress in destinationAddress, call getShuttleInformation(); to put timeAndDistance to pickup location
+
+            shuttleLogic.setOriginAddress(shuttleLogic.getPlaceAddress());
+            shuttleLogic.setOriginLatLng(shuttleLogic.getPlaceLatLng());
+        }
+
+        else if (requestCode == AUTOCOMPLETE_DESTINATION_REQUEST_CODE) {
+            shuttleLogic.putPlaceInformationInEditTextItemOnPlaceResult(resultCode, data, destTV);
+            shuttleLogic.setDestinationAddress(shuttleLogic.getPlaceAddress());
+        }
     }
 }

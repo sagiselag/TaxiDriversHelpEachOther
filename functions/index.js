@@ -181,8 +181,15 @@ exports.scheduledFunctionForMovingTomorrowIntoToday = functions.pubsub.schedule(
 					// doc.data() is never undefined for query doc snapshots
 					console.log(doc.id, " => ", doc.data());
 					var docItem = doc.data();
+					// Add a new document with a generated id.					
+					var newDelayVal = (doc.data().shuttleTime.split(":")[0] * 60) + (doc.data().shuttleTime.split(":")[1]*1);
+					console.log("newDelayVal = ", newDelayVal);										
 					// Add a new document with a generated id.
-					db.collection("todayDelayedShuttles").add(docItem);
+					db.collection("todayDelayedShuttles").add({
+						docItem, 
+						delayInMinutes:newDelayVal
+						});
+						
 					db.collection("tomorrowDelayedShuttles").doc(doc.id).delete();		
 				return null;
 				});
@@ -221,10 +228,9 @@ exports.scheduledFunctionForMovingDelayedShuttlesIntoTomorrow = functions.pubsub
 				querySnapshot.forEach(function(doc)
 				{
 					// doc.data() is never undefined for query doc snapshots
-					console.log(doc.id, " => ", doc.data());
-					var docItem = doc.data();
-					// Add a new document with a generated id.
-					db.collection("tomorrowDelayedShuttles").add(docItem);
+					console.log(doc.id, " => ", doc.data());												
+					var docItem = doc.data();					
+					db.collection("tomorrowDelayedShuttles").add(docItem);	
 					db.collection("delayedShuttles").doc(doc.id).delete();		
 				return null;
 				});

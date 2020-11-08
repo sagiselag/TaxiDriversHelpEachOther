@@ -244,8 +244,8 @@ public class MenuFragment extends Fragment {
             premiumMinPriceTIL.setVisibility(View.VISIBLE);
         }
         else{
-            premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
-            premiumMinPriceTIL.setVisibility(View.INVISIBLE);
+            premiumMaxPickupDrivingTimeTIL.setVisibility(View.GONE);
+            premiumMinPriceTIL.setVisibility(View.GONE);
         }
 
 
@@ -343,8 +343,8 @@ public class MenuFragment extends Fragment {
             premiumMinPriceTIL.setVisibility(View.VISIBLE);
         }
         else{
-            premiumMaxPickupDrivingTimeTIL.setVisibility(View.INVISIBLE);
-            premiumMinPriceTIL.setVisibility(View.INVISIBLE);
+            premiumMaxPickupDrivingTimeTIL.setVisibility(View.GONE);
+            premiumMinPriceTIL.setVisibility(View.GONE);
         }
 
 
@@ -408,6 +408,8 @@ public class MenuFragment extends Fragment {
                 tabImageView = (tabLayout.getTabAt(currTab).getCustomView().findViewById(R.id.tab_item_icon));
                 tabTextView.setText(tabsNames.get(currTab));
                 tabImageView.setImageDrawable(getResources().getDrawable(icons.get(currTab), null));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorText));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorText));
             }
         }
 
@@ -421,26 +423,28 @@ public class MenuFragment extends Fragment {
             public void onTabSelected(TabLayout.Tab tab) {
                 tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
                 tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
-                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
-                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimary));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorAccent));
                 settingsConstraintLayout.setVisibility(View.GONE);
-                tabAdapter.getFragmentInPosition(tab.getPosition()).refresh();
+                if(tab.getPosition() == 3) {
+                    tabAdapter.getFragmentInPosition(tab.getPosition()).refresh();
+                }
             }
 
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
                 tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
                 tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
-                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimaryDark));
-                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimaryDark));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorText));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorText));
             }
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
                 tabTextView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_text));
                 tabImageView = (tabLayout.getTabAt(tab.getPosition()).getCustomView().findViewById(R.id.tab_item_icon));
-                tabTextView.setTextColor(getResources().getColor(R.color.colorPrimary));
-                tabImageView.setColorFilter(getResources().getColor(R.color.colorPrimary));
+                tabTextView.setTextColor(getResources().getColor(R.color.colorAccent));
+                tabImageView.setColorFilter(getResources().getColor(R.color.colorAccent));
             }
         });
 
@@ -617,6 +621,13 @@ public class MenuFragment extends Fragment {
                 logicHandler.setInFetchingDataProgress(false);
             }
         }
+        else{
+            logicHandler.setNotificationTopic(notificationTopic);
+            alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+            notificationIntent = new Intent(getContext().getApplicationContext(), NotificationReceiver2.class);
+            notificationIntent.putExtra("isAvailable", isAvailable);
+            pendingIntent = PendingIntent.getBroadcast(getContext().getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        }
     }
 
     private void init() {
@@ -628,15 +639,24 @@ public class MenuFragment extends Fragment {
             loadPreferences();
         }
 
-        logicHandler.setAvailable(isAvailable);
-        logicHandler.setNotificationTopic(notificationTopic);
-        alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        notificationIntent = new Intent(getContext().getApplicationContext(), NotificationReceiver2.class);
-        notificationIntent.putExtra("isAvailable", isAvailable);
-        pendingIntent = PendingIntent.getBroadcast(getContext().getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+        if(notificationCheckBox.isChecked() != isAvailable){
+            notificationCheckBox.setChecked(isAvailable);
+        }
+        else{
+            notificationCheckBox.setChecked(!notificationCheckBox.isChecked());
+            notificationCheckBox.setChecked(!notificationCheckBox.isChecked());
+        }
+
+
+//        logicHandler.setAvailable(isAvailable);
+//        logicHandler.setNotificationTopic(notificationTopic);
+//        alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+//        notificationIntent = new Intent(getContext().getApplicationContext(), NotificationReceiver2.class);
+//        notificationIntent.putExtra("isAvailable", isAvailable);
+//        pendingIntent = PendingIntent.getBroadcast(getContext().getApplicationContext(), 1, notificationIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         resetLastClickTime();
-        savePreferences();
+//        savePreferences();
     }
 
     private void permissionsInit() {
@@ -652,7 +672,7 @@ public class MenuFragment extends Fragment {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == ACCESS_FINE_LOCATION_PERMISSION_REQUEST){
+        if(grantResults.length > 0 && requestCode == ACCESS_FINE_LOCATION_PERMISSION_REQUEST){
             if(grantResults[0] != PackageManager.PERMISSION_GRANTED){
                 Toast.makeText(getContext(), getString(R.string.cantWorkProperly), Toast.LENGTH_LONG).show();
             }
@@ -711,6 +731,7 @@ public class MenuFragment extends Fragment {
 
     public void savePreferences() {
         try{
+            sharedPreferencesUtils = MainActivity.getSharedPreferencesUtils();
             sharedPreferencesUtils.setAvailable(isAvailable);
             sharedPreferencesUtils.setGeneralMaxDistanceInMinutes(generalPickupSeekBar.getProgress());
             sharedPreferencesUtils.setNotificationTopic(notificationTopic);

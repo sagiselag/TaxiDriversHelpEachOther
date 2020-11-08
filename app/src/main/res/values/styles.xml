@@ -26,4 +26,16 @@
 <!--        <item name="android:stateListAnimator" tools:targetApi="lollipop">@null</item>-->
 <!--    </style>-->
 
+    <style name="AppTheme.Base" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:textColor">@color/colorAccent</item>
+        <item name="android:buttonStyle">@style/ButtonColor</item>
+        <item name="colorButtonNormal">@color/quantum_googgreen800</item>
+    </style>
+
+
+
+    <style name="ButtonColor" parent="@android:style/Widget.Button">
+        <item name="android:textColor">@color/quantum_purple</item>
+    </style>
+
 </resources>

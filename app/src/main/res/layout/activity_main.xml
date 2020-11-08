@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/root_layout"
-    android:background="@drawable/bg_gradient"
+    android:background="@drawable/bg_gradient_taxi_colors"
     app:layout_constraintTop_toTopOf="parent"
     tools:context=".view.MainActivity">
 

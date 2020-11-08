@@ -1,4 +1,4 @@
-package com.android2.taxidrivershelpeachother.model;
+package com.android2.taxidrivershelpeachother.view;
 
 import android.text.Editable;
 import android.text.TextWatcher;

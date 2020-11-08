@@ -10,7 +10,7 @@
         android:id="@+id/sort_filter_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
+        android:background="@color/colorBackground"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -19,6 +19,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
+            android:backgroundTint="@color/colorBackground"
             android:outlineProvider="none"
             android:text="@string/sort"
             android:textColor="@color/colorPrimaryDark"
@@ -46,6 +47,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
+            android:backgroundTint="@color/colorBackground"
             android:outlineProvider="none"
             android:text="@string/filter"
             android:textColor="@color/colorPrimaryDark"
@@ -65,7 +67,7 @@
         android:id="@+id/shuttles_recycler"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@drawable/bg_gradient"
+        android:background="@color/colorBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

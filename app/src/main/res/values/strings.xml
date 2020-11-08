@@ -80,7 +80,7 @@
     <string name="for_premium_shuttles">Add premium shuttles search settings</string>
     <string name="minimum_price">Minimum price</string>
     <string name="pickup_distance">Pick-up distance</string>
-    <string name="pickup_at">pickup time</string>
+    <string name="pickup_time">pickup time</string>
     <string name="we_found_shuttle_requests_in_your_area">We found requests for shuttles that match your search settings</string>
     <string name="unable_to_calculate_distance">Unable to calculate distance for pickup</string>
     <string name="cancel_shuttle">Cancel</string>
@@ -99,4 +99,9 @@
     <string name="filter">Filter</string>
     <string name="logout">Logout</string>
     <string name="delete">Delete</string>
+    <string name="more_information">More</string>
+    <string name="less_information">Less</string>
+    <string name="call_dialog_msg">Dial to</string>
+    <string name="dial">Dial</string>
+    <string name="cancel">Cancel</string>
 </resources>

@@ -2,6 +2,7 @@
   <dictionary name="sagis">
     <words>
       <w>firestore</w>
+      <w>waze</w>
     </words>
   </dictionary>
 </component>

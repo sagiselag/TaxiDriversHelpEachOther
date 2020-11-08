@@ -1,4 +1,4 @@
-package com.android2.taxidrivershelpeachother.model;
+package com.android2.taxidrivershelpeachother.view;
 
 import android.content.Context;
 import android.telephony.PhoneNumberFormattingTextWatcher;
@@ -20,10 +20,15 @@ public class MyPhoneTextWatcher extends PhoneNumberFormattingTextWatcher {
 
 
 
-    public MyPhoneTextWatcher(Context context, EditText editText){
+    public MyPhoneTextWatcher(Context context, EditText editText, boolean useCountryCode){
         this.context = context;
         this.phoneNumberET = editText;
-        countryCode = "+ ("+ String.valueOf(String.valueOf(getCurrentCountryCode(context))) + ") ";
+        if(useCountryCode){
+            countryCode = "+ ("+ String.valueOf(String.valueOf(getCurrentCountryCode(context))) + ") ";
+        }
+        else{
+            countryCode = "";
+        }
         filterArray[0] = new InputFilter.LengthFilter(countryCode.length() + PHONE_NUMBER_LENGTH);
         if(phoneNumberET != null)
         {

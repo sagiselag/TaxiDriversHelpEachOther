@@ -22,6 +22,43 @@ import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
 import com.android2.taxidrivershelpeachother.controller.SharedPreferencesUtils;
 
+/*
+TODO:
+ *      Quick explanation (max 30 sec) after first installation and from side menu
+ *      Application must work faster
+ *      Bit (payment) configuration
+ *      Products offers
+ *      Search 
+ *      Closing the keyboard after input
+ *      All phone numbers must be clickable
+ *      Add distance and time for pickup in all fragments
+ *      Add balance in the sort / filter line
+ *      On sold shuttle edit:
+             if has more than 30 minutes to pickup handling driver get 10 minutes to Re-approval
+             else handling driver get 5 minutes to Re-approval
+ *      Time picker - Change from selection by dial to selection by scrolling
+ *      Sort:
+             by time on taken shuttles
+             by time / location / nearby on available shuttles
+ *      Navigation to address / location - on shuttle information fragments and on committed shuttle time to go notification
+ *      WAZE:
+             connection - for shuttle driving time information and for navigation
+             add information on approximately shuttle driving time in the same hour and day of the week (from waze DB)
+ *      New lead client from contacts (or other if need manually)
+ *      Remainder for committed shuttles - driving time + 15 minutes
+ *      Double confirmation on cancel operation
+ *      Cancel commitments policy:
+             first 5 minutes - free of charge
+             up to one hour before pickup - half commission fee payment
+             30 minutes or less to pickup - full commission fee payment, limited to max 3 cancels in the last 30 days
+ *      Tabs font must be bigger
+ *      Add shuttle classification:
+            Passenger
+            Shipment
+            Other
+
+*/
+
 public class MainActivity extends AppCompatActivity {
     public static Location prevLocation;
     public static boolean appIsClosed = false;
@@ -98,13 +135,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    @Override
-//    public void onBackPressed(){
-//        Intent a = new Intent(Intent.ACTION_MAIN);
-//        a.addCategory(Intent.CATEGORY_HOME);
-//        a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//        startActivity(a);
-//    }
+    @Override
+    public void onBackPressed(){
+        Intent a = new Intent(Intent.ACTION_MAIN);
+        a.addCategory(Intent.CATEGORY_HOME);
+        a.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(a);
+    }
 
 
     public static ImageView getImageViewToUpdate() {

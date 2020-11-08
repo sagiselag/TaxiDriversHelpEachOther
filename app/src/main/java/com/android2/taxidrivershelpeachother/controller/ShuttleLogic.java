@@ -6,8 +6,7 @@ import android.content.Intent;
 import android.location.Location;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
@@ -38,12 +37,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
 import static android.app.Activity.RESULT_CANCELED;
@@ -52,10 +49,11 @@ import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class ShuttleLogic {
     private final Calendar calendar = Calendar.getInstance();
-    private final Context context;
+    private Context context;
     private final NewShuttleFragment newShuttleFragment;
-    private final View view;
+    private View view;
     private final String placesAPI = "AIzaSyA9TU9q7dK5KpTsgawkNjfSArhtM00RzoQ";
+    private final AvailableShuttleFragment availableShuttleFragment;
     private String placeAddress;
     private LatLng placeLatLng, originLatLng;
     private final String distanceMatrixAPI = "AIzaSyAWAnXrIUC35qBUYXlYwJ0SMdMeTVieeAA", distanceMatrixHttpRequest = "https://maps.googleapis.com/maps/api/distancematrix/json?origins=";
@@ -67,7 +65,39 @@ public class ShuttleLogic {
     private Fragment fragment;
     private String shuttleID = null;
     private FireBaseHandler fireBaseHandler = FireBaseHandler.getInstance();
-    private EditText timeET, dateET;
+    private TextView timeET, dateET, fromTV, destTV;
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
+    public View getView() {
+        return view;
+    }
+
+    public void setView(View view) {
+        this.view = view;
+    }
+
+    public TextView getFromTV() {
+        return fromTV;
+    }
+
+    public void setFromTV(TextView fromTV) {
+        this.fromTV = fromTV;
+    }
+
+    public TextView getDestTV() {
+        return destTV;
+    }
+
+    public void setDestTV(TextView destTV) {
+        this.destTV = destTV;
+    }
 
     public String getShuttleID() {
         return shuttleID;
@@ -85,21 +115,52 @@ public class ShuttleLogic {
         this.fragment = fragment;
     }
 
+    public void setItemViewHolder(Fragment fragment) {
+        this.fragment = fragment;
+        dateET = fragment.getView().findViewById(R.id.SIC_date);
+        timeET = fragment.getView().findViewById(R.id.SIC_time);
+    }
+
+    public TextView getTimeET() {
+        return timeET;
+    }
+
+    public TextView getDateET() {
+        return dateET;
+    }
+
     public ShuttleLogic(Context context){
         this.context = context;
         this.newShuttleFragment = null;
+        this.availableShuttleFragment = null;
         this.view = null;
     }
 
     public ShuttleLogic(Context context, NewShuttleFragment fragment, View view){
         this.context = context;
         this.newShuttleFragment = fragment;
+        this.availableShuttleFragment = null;
         this.view = view;
 
         setDatePicker ();
         setTimePicker();
         initializePlaces();
+        fromTV = this.view.findViewById(R.id.SIC_from);
     }
+
+    public ShuttleLogic(Context context, AvailableShuttleFragment fragment, View view){
+        this.context = context;
+        this.newShuttleFragment = null;
+        this.availableShuttleFragment = fragment;
+        this.view = view;
+
+        setDatePicker ();
+        setTimePicker();
+        initializePlaces();
+        fromTV = this.view.findViewById(R.id.SIC_from);
+    }
+
+
 
     public String getOriginAddress() {
         return originAddress;
@@ -165,20 +226,31 @@ public class ShuttleLogic {
 
         datePickerBuilder.setTitleText("INPUT DATE");
         final MaterialDatePicker materialDatePicker = datePickerBuilder.build();
-        final EditText date = view.findViewById(R.id.SIC_date);
+        final TextView date = view.findViewById(R.id.SIC_date);
 
-        date.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(hasFocus){
-                    if(newShuttleFragment != null) {
-                        materialDatePicker.show(newShuttleFragment.getFragmentManager(), "DATE_PICKER");
-                    }
-                    else{
-                        materialDatePicker.show(fragment.getFragmentManager(), "DATE_PICKER");
-                    }
+//        date.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//            @Override
+//            public void onFocusChange(View v, boolean hasFocus) {
+//                if(hasFocus){
+//                    if(newShuttleFragment != null) {
+//                        materialDatePicker.show(newShuttleFragment.getFragmentManager(), "DATE_PICKER");
+//                    }
+//                    else{
+//                        materialDatePicker.show(fragment.getFragmentManager(), "DATE_PICKER");
+//                    }
+//                }
+//            }
+//        });
+
+        date.setOnClickListener(v -> {
+
+                if(newShuttleFragment != null) {
+                    materialDatePicker.show(newShuttleFragment.getFragmentManager(), "DATE_PICKER");
                 }
-            }
+                else{
+                    materialDatePicker.show(fragment.getFragmentManager(), "DATE_PICKER");
+                }
+
         });
 
         date.setText(context.getString(R.string.today));
@@ -266,14 +338,19 @@ public class ShuttleLogic {
                 }
             };
 
-            timeET.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-                @Override
-                public void onFocusChange(View v, boolean hasFocus) {
-                    if (hasFocus) {
-                        TimePickerDialog timePickerDialog = new TimePickerDialog(context, timeSetListener, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
-                        timePickerDialog.show();
-                    }
-                }
+//            timeET.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//                @Override
+//                public void onFocusChange(View v, boolean hasFocus) {
+//                    if (hasFocus) {
+//                        TimePickerDialog timePickerDialog = new TimePickerDialog(context, timeSetListener, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+//                        timePickerDialog.show();
+//                    }
+//                }
+//            });
+
+            timeET.setOnClickListener(v -> {
+                TimePickerDialog timePickerDialog = new TimePickerDialog(context, timeSetListener, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), true);
+                timePickerDialog.show();
             });
         }
     }
@@ -290,28 +367,37 @@ public class ShuttleLogic {
         PlacesClient placesClient= Places.createClient(context);
     }
 
-    public void placeRequest(@Nullable final ViewGroup container, int code){
+    public void placeRequest(@Nullable final Context container, int code){
         // Set the fields to specify which types of place data to
         // return after the user has made a selection.
         List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG);
 
         // Start the autocomplete intent.
         Intent intent;
-        if(container != null) {
-            intent = new Autocomplete.IntentBuilder(
-                    AutocompleteActivityMode.OVERLAY, fields)
-                    .build(container.getContext());
+        final String country = context.getResources().getConfiguration().getLocales().get(0).getCountry();
+//        if(container != null) {
+//            intent = new Autocomplete.IntentBuilder(
+//                    AutocompleteActivityMode.OVERLAY, fields).setCountry(country)
+//                    .build(container.getContext());
+//        }
+//        else{
+//            intent = new Autocomplete.IntentBuilder(
+//                    AutocompleteActivityMode.OVERLAY, fields).setCountry(country)
+//                    .build(view.getContext());
+//        }
+        intent = new Autocomplete.IntentBuilder(
+                AutocompleteActivityMode.OVERLAY, fields).setCountry(country)
+                .build(container);
+        if(newShuttleFragment != null){
+            newShuttleFragment.startActivityForResult(intent, code);
         }
         else{
-            intent = new Autocomplete.IntentBuilder(
-                    AutocompleteActivityMode.OVERLAY, fields)
-                    .build(view.getContext());
+            availableShuttleFragment.startActivityForResult(intent, code);
         }
-        newShuttleFragment.startActivityForResult(intent, code);
 
     }
 
-    public void putPlaceInformationInEditTextItemOnPlaceResult(int resultCode, Intent data, EditText editTextToPutInformation){
+    public void putPlaceInformationInEditTextItemOnPlaceResult(int resultCode, Intent data, TextView editTextToPutInformation){
         if (resultCode == RESULT_OK) {
             Place place = Autocomplete.getPlaceFromIntent(data);
             Log.i(TAG, "Place: " + place.getName() + ", " + place.getId());
@@ -416,9 +502,10 @@ public class ShuttleLogic {
         String collectionName;
         Passenger passenger;
 
-        if(newShuttleFragment != null) {
-            shuttleTime = newShuttleFragment.getTime_et().getText().toString();
-            shuttleDate = newShuttleFragment.getDate_et().getText().toString();
+        // if new shuttle or sold shuttle add new shuttle to DB using the input in the form
+        if(shuttleItem == null || (shuttleItem.getId() != null && !shuttleItem.getId().equalsIgnoreCase(""))) {
+            shuttleTime = newShuttleFragment.getTime_btn().getText().toString();
+            shuttleDate = newShuttleFragment.getDate_btn().getText().toString();
 
             if (shuttleDate.equalsIgnoreCase(context.getString(R.string.today))) {
                 shuttleDate = LogicHandler.getTodayDateString();
@@ -430,15 +517,14 @@ public class ShuttleLogic {
                 shuttleTime = LogicHandler.getCurrentTimeString();
             }
 
-            originAddress = newShuttleFragment.getFrom_et().getText().toString();
-            destinationAddress = newShuttleFragment.getDestination_et().getText().toString();
-            isFixedPrice = newShuttleFragment.getFixedPrice_cb().isChecked();
-            if (isFixedPrice) {
-                String priceStr = newShuttleFragment.getFixedPrice_et().getText().toString().replaceAll("[^0-9.]", "");
-                price = Integer.valueOf(priceStr);
+            originAddress = newShuttleFragment.getFrom_btn().getText().toString();
+            destinationAddress = newShuttleFragment.getDestination_btn().getText().toString();
+            if (newShuttleFragment.fixedPrice()) {
+                String priceStr = newShuttleFragment.getPrice_et().getText().toString().replaceAll("[^0-9.]", "");
+                price = Integer.parseInt(priceStr);
             }
 
-            commissionFee = Integer.valueOf(newShuttleFragment.getCommissionFee_et().getText().toString().replaceAll("[^0-9.]", ""));
+            commissionFee = Integer.parseInt(newShuttleFragment.getCommissionFee_et().getText().toString().replaceAll("[^0-9.]", ""));
             remarks = newShuttleFragment.getRemarks_et().getText().toString();
             passengerName = newShuttleFragment.getPassengerName_et().getText().toString();
             passengerPhone = newShuttleFragment.getPassengerPhone_et().getText().toString();
@@ -452,10 +538,10 @@ public class ShuttleLogic {
 
             fireBaseHandler.addNewShuttleToDB(shuttleItem, collectionName);
         }
+        // edit the shuttle
         else{
             fireBaseHandler.editShuttle(shuttleID, shuttleItem);
         }
-
     }
 
     public double getShuttleDistanceInKm() {
@@ -464,5 +550,27 @@ public class ShuttleLogic {
 
     public int getShuttleDistanceInMinutes() {
         return shuttleDistanceInMinutes;
+    }
+
+    public static String timeStrFormatter(int shuttleDistanceTime, Context context){
+        int hours, minutes;
+        String shuttleDistanceTimeStr = "";
+        hours = shuttleDistanceTime / 100;
+        minutes = shuttleDistanceTime % 100;
+        if (hours >= 1) {
+            if (hours > 1) {
+                shuttleDistanceTimeStr = String.valueOf(hours) + " " + context.getString(R.string.hours) + " ";
+            } else {
+                shuttleDistanceTimeStr = context.getString(R.string.hour) + " ";
+            }
+        }
+
+        if (minutes == 1) {
+            shuttleDistanceTimeStr += context.getString(R.string.minute);
+        } else {
+            shuttleDistanceTimeStr += String.valueOf(minutes) + " " + context.getString(R.string.minutes);
+        }
+
+        return shuttleDistanceTimeStr;
     }
 }

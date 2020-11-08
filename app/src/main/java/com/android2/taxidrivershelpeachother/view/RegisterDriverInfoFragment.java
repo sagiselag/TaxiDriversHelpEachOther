@@ -2,10 +2,6 @@ package com.android2.taxidrivershelpeachother.view;
 
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.telephony.PhoneNumberFormattingTextWatcher;
-import android.text.Editable;
-import android.text.InputFilter;
-import android.text.Selection;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,11 +17,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
-import com.android2.taxidrivershelpeachother.model.DatesTextWatcher;
-import com.android2.taxidrivershelpeachother.model.MyPhoneTextWatcher;
 import com.android2.taxidrivershelpeachother.model.User;
-
-import java.util.Calendar;
 
 public class RegisterDriverInfoFragment extends Fragment {
     private static final int REQUEST_IMAGE_CAPTURE = 7;
@@ -52,7 +44,7 @@ public class RegisterDriverInfoFragment extends Fragment {
         email = view.findViewById(R.id.register_driver_email);
         driverLicenseIV = view.findViewById(R.id.driverLicenseIV);
 
-        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), phone);
+        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), phone, true);
         countryCode = phoneTextWatcher.getCountryCode();
 
         next.setEnabled(false);

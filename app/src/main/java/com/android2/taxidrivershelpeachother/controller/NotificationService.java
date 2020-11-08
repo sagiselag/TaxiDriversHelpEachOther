@@ -79,7 +79,9 @@ public class NotificationService extends Service {
     private void job() {
         Intent intent = new Intent(context, NotificationReceiver2.class);
 
-        intent.putExtras(parentIntent.getExtras());
+        if(parentIntent != null) {
+            intent.putExtras(parentIntent.getExtras());
+        }
 
         availableToTakeShuttles = settings.getBoolean("isAvailable", false);
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);

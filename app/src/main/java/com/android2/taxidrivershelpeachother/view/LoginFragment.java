@@ -4,8 +4,6 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputFilter;
-import android.text.Selection;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,7 +19,6 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
-import com.android2.taxidrivershelpeachother.model.MyPhoneTextWatcher;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -55,13 +52,13 @@ public class LoginFragment extends Fragment {
     }
 
     private void updateUI(FirebaseUser currentUser) {
-        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), null);
+        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), null, true);
         final String countryCode = phoneTextWatcher.getCountryCode();
         String userPhoneNumber = currentUser.getPhoneNumber();
 
         if (userPhoneNumber.length() > 10)
         {
-            userPhoneNumber = userPhoneNumber.substring(userPhoneNumber.length() - 10);
+            userPhoneNumber = "0" + userPhoneNumber.substring(userPhoneNumber.length() - 9);
         }
 
         userPhoneNumber = countryCode + userPhoneNumber;
@@ -76,7 +73,7 @@ public class LoginFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.login_fragment, container, false);
         phoneNumberET = view.findViewById(R.id.phoneNumberEt);
-        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), phoneNumberET);
+        final MyPhoneTextWatcher phoneTextWatcher = new MyPhoneTextWatcher(getContext(), phoneNumberET, true);
         final String countryCode = phoneTextWatcher.getCountryCode();
 
         permissionsInit();

@@ -81,7 +81,7 @@
     <string name="for_premium_shuttles">הוסף הגדרות חיפוש עבור נסיעות פרימיום</string>
     <string name="minimum_price">מחיר מינימום</string>
     <string name="pickup_distance">מרחק מנקודת איסוף</string>
-    <string name="pickup_at">שעת איסוף</string>
+    <string name="pickup_time">שעת איסוף</string>
     <string name="we_found_shuttle_requests_in_your_area">מצאנו בקשות להסעות התואמות להגדרות החיפוש שלך</string>
     <string name="unable_to_calculate_distance">זמן נסיעה לאיסוף לא זמין</string>
     <string name="cancel_shuttle">ביטול</string>
@@ -100,4 +100,9 @@
     <string name="filter">סינון</string>
     <string name="logout">התנתק</string>
     <string name="delete">מחק</string>
+    <string name="more_information">עוד</string>
+    <string name="less_information">פחות</string>
+    <string name="call_dialog_msg">"התקשר ל "</string>
+    <string name="dial">חייג</string>
+    <string name="cancel">ביטול</string>
 </resources>

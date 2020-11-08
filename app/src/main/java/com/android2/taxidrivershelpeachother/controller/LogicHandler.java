@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
@@ -19,47 +18,33 @@ import android.os.Build;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.FileProvider;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
-import com.android2.taxidrivershelpeachother.model.Passenger;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
-import com.android2.taxidrivershelpeachother.model.VolleyHandler;
 import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.firestore.GeoPoint;
 
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.Time;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.TimeZone;
-import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -88,7 +73,7 @@ public class LogicHandler {
     private int maxKmPerMinute = 2; // 120 / 60 = 2 , based on max speed 120 km/h
     private boolean usePremiumSettings;
     private int generalMaxDistanceInMinutes, premiumMaxDistanceInMinutes, premiumMinPrice;
-    private String minute, minutes, from, to, shuttleTime, pickupAt;
+    private String minute, minutes, from, to, shuttleTime, pickupAt, pickupDistance;
     private static boolean isInFetchingDataProgress = false;
     public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static DateTimeFormatter htf = DateTimeFormatter.ofPattern("HH:mm");
@@ -113,7 +98,8 @@ public class LogicHandler {
         this.minutes = context.getString(R.string.minutes);
         this.from = context.getString(R.string.from);
         this.to = context.getString(R.string.destination);
-        this.pickupAt = context.getString(R.string.pickup_at);
+        this.pickupAt = context.getString(R.string.pickup_time);
+        this.pickupDistance = context.getString(R.string.pickup_distance);
     }
 
 
@@ -229,7 +215,7 @@ public class LogicHandler {
     }
 
     private void initNotificationChannelAndBuilder(){
-        if(!notificationChannelIsInitialized){
+        if(!notificationChannelIsInitialized || builder == null){
             String channelId = "taxi_drivers_leads_app_channel_id";
             CharSequence channelName = "Taxi Drivers Help Each Other";
 
@@ -245,7 +231,7 @@ public class LogicHandler {
 
             builder = new NotificationCompat.Builder(context, channelId);
             builder.setSmallIcon(android.R.drawable.star_on);
-
+            builder.setContentTitle(context.getString(R.string.new_shuttle_request));
             notificationChannelIsInitialized = true;
         }
     }
@@ -276,7 +262,7 @@ public class LogicHandler {
         // shuttle time stored in UTC in the DB
         originAdd = newestShuttleItem.getOriginAddress();
         destAdd = newestShuttleItem.getDestinationAddress();
-        description = distInMin + "\n" + pickupAt + ": " + shuttleTime + "\n" + from + "\n" + originAdd + "\n" + to + "\n" + destAdd;
+        description = pickupDistance + ": " + distInMin + "\n" + pickupAt + ": " + shuttleTime + "\n" + from + "\n" + originAdd + "\n" + to + "\n" + destAdd;
         builder.setStyle(new NotificationCompat.BigTextStyle().bigText(description));
 
         // TODO open nevigation to origin place
