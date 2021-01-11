@@ -16,6 +16,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.controller.LogicHandler;
+import com.android2.taxidrivershelpeachother.controller.MyStringFormatter;
 import com.android2.taxidrivershelpeachother.controller.ShuttleItemAdapter;
 import com.android2.taxidrivershelpeachother.controller.ShuttleLogic;
 import com.android2.taxidrivershelpeachother.view.AuthenticationFragment;
@@ -25,7 +26,6 @@ import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.android2.taxidrivershelpeachother.view.MenuFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskExecutors;
@@ -34,10 +34,12 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreSettings;
 import com.google.firebase.firestore.GeoPoint;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -45,7 +47,6 @@ import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.functions.FirebaseFunctions;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.google.protobuf.Empty;
 import com.squareup.picasso.Picasso;
 
 import org.imperiumlabs.geofirestore.GeoFirestore;
@@ -62,6 +63,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -79,6 +81,7 @@ public class FireBaseHandler {
     private PhoneAuthProvider.ForceResendingToken mResendToken;
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private FirebaseFirestoreSettings firebaseFirestoreSettings;
     private StorageReference mStorageRef = FirebaseStorage.getInstance().getReference();
     private FirebaseFunctions mFunctions = FirebaseFunctions.getInstance();
     private List<GeoFirestore> geoFirestoreList;
@@ -142,8 +145,8 @@ public class FireBaseHandler {
 
     private FireBaseHandler() {
         firebaseAuth = FirebaseAuth.getInstance();
-        initCollectionNames();
 
+        initCollectionNames();
         mCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
@@ -186,6 +189,13 @@ public class FireBaseHandler {
                 fragmentTransaction.commit();
             }
         };
+
+        // Configure offline FireStore DB persistence
+        firebaseFirestoreSettings = new FirebaseFirestoreSettings.Builder()
+                .setPersistenceEnabled(true)
+                .build();
+        db.setFirestoreSettings(firebaseFirestoreSettings);
+        setDBListeners();
     }
 
     public void setLogicHandler(LogicHandler logicHandler) {
@@ -455,9 +465,18 @@ public class FireBaseHandler {
         shuttle.put("shuttleDistanceInMinutes", newShuttleItem.getShuttleDistanceInMinutes());
         shuttle.put("originLatLng", newShuttleItem.getOriginLatLng());
         shuttle.put("publishedBy", loggedInUser.getPhone());
+        shuttle.put("expiredTime", newShuttleItem.getShuttleTime());
+        shuttle.put("expiredDate", newShuttleItem.getShuttleDate());
 
         if(collectionName.equalsIgnoreCase(availableUnsoldShuttlesCollectionsNames.get(0)) || collectionName.equalsIgnoreCase(availableUnsoldShuttlesCollectionsNames.get(1))){
-            shuttle.put("delayInMinutes", calcDelayInMinutes(newShuttleItem));
+            int delayInMinutes = LogicHandler.calcDelayInMinutes(newShuttleItem);
+            if(delayInMinutes < LogicHandler.IMMEDIATE_SHUTTLE_DELAY) {
+                delayInMinutes = LogicHandler.IMMEDIATE_SHUTTLE_DELAY;
+                shuttle.put("delayInMinutes", delayInMinutes);
+                LogicHandler.calcExpiredTimeAndDateForImmediateShuttles(newShuttleItem.getShuttleTime(), newShuttleItem.getShuttleDate());
+                shuttle.put("expiredTime", LogicHandler.expire.time);
+                shuttle.put("expiredDate", LogicHandler.expire.date);
+            }
         }
 
         final GeoPoint geoPoint = new GeoPoint(newShuttleItem.getOriginLatLng().latitude, newShuttleItem.getOriginLatLng().longitude);
@@ -1061,6 +1080,30 @@ public class FireBaseHandler {
         return minutesDist;
     }
 
+    private int calcExpiredTimeAndDate(String shuttleTimeStr, int minutesDist){
+        int shuttleHour, shuttleMinutes, index;
+        shuttleTimeStr = shuttleTimeStr.replaceAll(" ","");
+        index = shuttleTimeStr.indexOf(":");
+        shuttleHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
+        shuttleMinutes = Integer.valueOf(shuttleTimeStr.substring(index+1));
+
+        if(minutesDist >= 0){
+            shuttleMinutes +=  minutesDist;
+            if(shuttleMinutes > 59){
+                shuttleMinutes -= 60;
+                shuttleHour += 1;
+                if(shuttleHour > 23){
+                    shuttleHour = 0;
+                }
+            }
+        }
+
+        String expiredTime = MyStringFormatter.getTimeStr(shuttleHour, shuttleMinutes);
+        String expiredDate = MyStringFormatter.getTimeStr(shuttleHour, shuttleMinutes);
+
+        return minutesDist;
+    }
+
     public String getCollectionNameForShuttle(ShuttleItem shuttleItem, boolean moveShuttleToCorrectCollection){
         // "immediateShuttles", "todayDelayedShuttles", tomorrowDelayedShuttles, "delayedShuttles", "soldShuttles", "expiredShuttles", "soldShuttlesHistory"
         String collectionName = null;
@@ -1151,6 +1194,53 @@ public class FireBaseHandler {
         }
         return collectionName;
     }
+
+    private HashMap <String, HashSet<String>> collectionsChangesDocIDs = new HashMap<>();
+
+    private void initCollectionsChangesDocIDs(){
+        HashSet<String> currStringHashSet;
+        for (String collectionName: allCollectionsNames) {
+            currStringHashSet = collectionsChangesDocIDs.get(collectionName);
+            if(currStringHashSet == null) currStringHashSet = new HashSet<>();
+            collectionsChangesDocIDs.put(collectionName, currStringHashSet);
+        }
+    }
+    public void setDBListeners() {
+        initCollectionsChangesDocIDs();
+        for (String collectionName : allCollectionsNames) {
+            db.collection(collectionName).addSnapshotListener((queryDocumentSnapshots, e) -> {
+                if (e != null) {
+                    Log.w(TAG, "Listen to db updates failed.", e);
+                }
+
+                String source;
+                if (queryDocumentSnapshots != null && queryDocumentSnapshots.getMetadata().hasPendingWrites())
+                    source = "Local";
+                else
+                    source = "Server";
+
+                List<DocumentChange> changedDocs = queryDocumentSnapshots.getDocumentChanges();
+                String collection = "", id = "", field = "";
+
+                for (DocumentChange doc: changedDocs) {
+                    collection = doc.getDocument().getReference().getPath();
+                    int index = collection.indexOf("/");
+                    collection = collection.substring(0, index);
+                    id = doc.getDocument().getId();
+                    (collectionsChangesDocIDs.get(collection)).add(id);
+                }
+
+
+//                if (queryDocumentSnapshots != null && !temp.isEmpty()) {
+//                    Toast.makeText(fragmentManager.getFragments().get(fragmentManager.getFragments().size() - 1).getContext(), temp.toString(), Toast.LENGTH_LONG).show();
+//                    Log.d(TAG, "$source data: ${snapshot.data}");
+//                } else {
+//                    Log.d(TAG, "$source data: null");
+//                }
+            });
+        }
+    }
+
 }
 
 

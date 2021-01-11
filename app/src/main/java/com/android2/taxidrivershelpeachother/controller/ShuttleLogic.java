@@ -37,6 +37,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
@@ -219,7 +220,7 @@ public class ShuttleLogic {
         datePickerBuilder.setSelection(calendar.getTimeInMillis());
         CalendarConstraints.Builder constraintsBuilder = new CalendarConstraints.Builder(); // 1
         constraintsBuilder.setStart(calendar.getTimeInMillis());   //   2
-        calendar.roll(Calendar.MONTH, 1);   //   3
+        calendar.add(Calendar.MONTH, 1);   //   3
         constraintsBuilder.setEnd(calendar.getTimeInMillis());   // 4
         constraintsBuilder.setValidator(DateValidatorPointForward.now()); // 5
         datePickerBuilder.setCalendarConstraints(constraintsBuilder.build());   //  6
@@ -292,22 +293,24 @@ public class ShuttleLogic {
     }
 
     private String getTimeStr(int hourOfDay, int minute){
-        String timeStr;
+        return MyStringFormatter.getTimeStr(hourOfDay, minute);
 
-        if(hourOfDay < 10){
-            timeStr = "0" + hourOfDay;
-        }
-        else{
-            timeStr = String.valueOf(hourOfDay);
-        }
-        timeStr += ":";
-        if (minute > 9) {
-            timeStr += minute;
-        } else {
-            timeStr += "0" + minute;
-        }
-
-        return timeStr;
+//        String timeStr;
+//
+//        if(hourOfDay < 10){
+//            timeStr = "0" + hourOfDay;
+//        }
+//        else{
+//            timeStr = String.valueOf(hourOfDay);
+//        }
+//        timeStr += ":";
+//        if (minute > 9) {
+//            timeStr += minute;
+//        } else {
+//            timeStr += "0" + minute;
+//        }
+//
+//        return timeStr;
     }
 
 

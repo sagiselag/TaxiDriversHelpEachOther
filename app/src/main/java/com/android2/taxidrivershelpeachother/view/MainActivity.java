@@ -51,7 +51,7 @@ TODO:
              first 5 minutes - free of charge
              up to one hour before pickup - half commission fee payment
              30 minutes or less to pickup - full commission fee payment, limited to max 3 cancels in the last 30 days
- *      Tabs font must be bigger
+ *      Tabs font must be bigger - DONE
  *      Add shuttle classification:
             Passenger
             Shipment

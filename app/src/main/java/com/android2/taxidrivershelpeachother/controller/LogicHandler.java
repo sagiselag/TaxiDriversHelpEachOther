@@ -11,7 +11,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Geocoder;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Build;
@@ -25,6 +24,7 @@ import androidx.core.content.FileProvider;
 import com.android2.taxidrivershelpeachother.R;
 import com.android2.taxidrivershelpeachother.model.FireBaseHandler;
 import com.android2.taxidrivershelpeachother.model.ShuttleItem;
+import com.android2.taxidrivershelpeachother.model.TimeAndDate;
 import com.android2.taxidrivershelpeachother.view.MainActivity;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -33,13 +33,9 @@ import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.GeoPoint;
 
-import org.json.JSONArray;
-
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -52,18 +48,20 @@ import static android.content.Context.MODE_PRIVATE;
 import static android.content.Context.NOTIFICATION_SERVICE;
 
 public class LogicHandler {
+    public static final int IMMEDIATE_SHUTTLE_DELAY = 15, IMMEDIATE_SHUTTLE_MINUTES = 60;
+
     private FusedLocationProviderClient fusedLocationProviderClient;
     private LocationCallback locationCallback;
     private Location prevLocation = MainActivity.getPrevLocation(), lastLocation;
-    private Geocoder geocoder;
-    private String DBLink;
-    private JSONArray shuttlesArray;
+//    private Geocoder geocoder;
+//    private String DBLink;
+//    private JSONArray shuttlesArray;
     private List<ShuttleItem> shuttleItems = new ArrayList<>();
-    private ShuttleItemAdapter shuttleItemAdapter;
+//    private ShuttleItemAdapter shuttleItemAdapter;
     private Context context;
     private NotificationManager notificationManager;
     private final int NOTIF_ID = 8;
-    private int currentNotificationNumber = 0;
+//    private int currentNotificationNumber = 0;
     private boolean isAvailable;
     private String notificationTopic;
     private boolean worksOnPrevLocation = false;
@@ -75,19 +73,22 @@ public class LogicHandler {
     private int generalMaxDistanceInMinutes, premiumMaxDistanceInMinutes, premiumMinPrice;
     private String minute, minutes, from, to, shuttleTime, pickupAt, pickupDistance;
     private static boolean isInFetchingDataProgress = false;
-    public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static DateTimeFormatter htf = DateTimeFormatter.ofPattern("HH:mm");
+//    public static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+//    private static DateTimeFormatter htf = DateTimeFormatter.ofPattern("HH:mm");
     public static SimpleDateFormat dateAndTimeSimpleDateFormatUTC = new SimpleDateFormat("dd/MM/yyyy HH:mm");
     public static SimpleDateFormat onlyDateSimpleDateFormatUTC = new SimpleDateFormat("dd/MM/yyyy");
-    private static LocalDateTime today;
-    private static LocalDateTime tomorrow;
+//    private static LocalDateTime today;
+//    private static LocalDateTime tomorrow;
     private static boolean notificationChannelIsInitialized = false;
     private NotificationChannel notificationChannel;
     private NotificationCompat.Builder builder;
+    private static Date date;
+    private static Date now;
+    public static TimeAndDate expire, immediate;
 
 
 
-//    public LogicHandler(Context context, List<ShuttleItem> shuttleItems, boolean isAvailable, String notificationTopic){
+    //    public LogicHandler(Context context, List<ShuttleItem> shuttleItems, boolean isAvailable, String notificationTopic){
     public LogicHandler(Context context){
         this.context = context;
         this.notificationManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
@@ -104,33 +105,38 @@ public class LogicHandler {
 
 
     public static String getTodayDateString(){
-        today = LocalDateTime.now();
-        return dtf.format(today);
+        return MyStringFormatter.getTodayDateString();
+//        today = LocalDateTime.now();
+//        return dtf.format(today);
     }
 
     public static String getCurrentTimeString(){
-        today = LocalDateTime.now();
-        return htf.format(today);
+        return MyStringFormatter.getCurrentTimeString();
+//        today = LocalDateTime.now();
+//        return htf.format(today);
     }
 
     public static String getTomorrowDateString(){
-        today = LocalDateTime.now();
-        tomorrow = today.plus(1, ChronoUnit.DAYS);
-        return dtf.format(tomorrow);
+        return MyStringFormatter.getTomorrowDateString();
+//        today = LocalDateTime.now();
+//        tomorrow = today.plus(1, ChronoUnit.DAYS);
+//        return dtf.format(tomorrow);
     }
 
     public static String getMaxTimeString(){
-        today = LocalDateTime.now();
-        today.plus(1, ChronoUnit.HOURS);
-
-        return htf.format(today);
+        return MyStringFormatter.getMaxTimeString();
+//        today = LocalDateTime.now();
+//        today.plus(1, ChronoUnit.HOURS);
+//
+//        return htf.format(today);
     }
 
     public static String getMaxDateString(){
-        today = LocalDateTime.now();
-        today.plus(1, ChronoUnit.HOURS);
-
-        return dtf.format(today);
+        return MyStringFormatter.getMaxDateString();
+//        today = LocalDateTime.now();
+//        today.plus(1, ChronoUnit.HOURS);
+//
+//        return dtf.format(today);
     }
 
     public FusedLocationProviderClient getFusedLocationProviderClient() {
@@ -345,5 +351,50 @@ public class LogicHandler {
         String timeZone = Calendar.getInstance().getTimeZone().getID();
         Date local = new Date(dateToLocalizeFromUTC.getTime() + TimeZone.getTimeZone(timeZone).getOffset(dateToLocalizeFromUTC.getTime()));
         return local;
+    }
+
+    public static int calcDelayInMinutes(ShuttleItem shuttleItem){
+        int hour, minutes, shuttleHour, shuttleMinutes, index, hourDist, minutesDist;
+        String shuttleTimeStr = shuttleItem.getShuttleTime().replaceAll(" ","");
+        date = null;
+        now = new Date();
+        hour = LocalDateTime.now().getHour();
+        minutes = LocalDateTime.now().getMinute();
+        index = shuttleTimeStr.indexOf(":");
+        shuttleHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
+        shuttleMinutes = Integer.valueOf(shuttleTimeStr.substring(index+1));
+        hourDist = shuttleHour - hour;
+        minutesDist = shuttleMinutes - minutes;
+        minutesDist += hourDist * 60;
+
+        return minutesDist;
+    }
+
+    public static void calcExpiredTimeAndDateForImmediateShuttles(String shuttleTimeStr, String shuttleDateStr){
+        int expiredHour, expiredMinutes, index;
+
+        // if date is 01/01/20 shuttle time 23:55 and IMMEDIATE_SHUTTLE_TIME = 15 than shuttle need to be expired in 02/01/20 00:10
+
+        String expiredTime = MyStringFormatter.getTimePlusNMinutesString(shuttleTimeStr, LogicHandler.IMMEDIATE_SHUTTLE_DELAY);
+        String expiredDate = shuttleDateStr;
+
+
+        expiredTime = shuttleTimeStr.replaceAll(" ","");
+        index = shuttleTimeStr.indexOf(":");
+        expiredHour = Integer.valueOf(shuttleTimeStr.substring(0, index));
+        expiredMinutes = Integer.valueOf(shuttleTimeStr.substring(index+1));
+
+
+        if(expiredHour == 0 && expiredMinutes < IMMEDIATE_SHUTTLE_DELAY)
+        {
+            expiredDate = MyStringFormatter.getNextDayDateString(shuttleDateStr);
+        }
+
+        if(expire == null){
+            expire = new TimeAndDate();
+        }
+
+        expire.date = expiredDate;
+        expire.time = expiredTime;
     }
 }
